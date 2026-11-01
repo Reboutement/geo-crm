@@ -56,7 +56,8 @@ services:
             --set-default "${SITE_NAME}"
         fi
         # appliqué à chaque déploiement : corriger ALLOW_CORS puis redéployer suffit
-        bench --site "${SITE_NAME}" set-config allow_cors "${ALLOW_CORS}"
+        # ALLOW_CORS accepte plusieurs origines séparées par des virgules
+        bench --site "${SITE_NAME}" set-config -p allow_cors "`echo "${ALLOW_CORS}" | jq -Rc 'split(",")'`"
     depends_on:
       configurator:
         condition: service_completed_successfully

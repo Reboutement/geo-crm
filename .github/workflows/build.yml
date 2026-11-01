@@ -10,7 +10,7 @@ on:
     inputs:
       tag:
         description: "Tag de l'image (ex. v1)"
-        default: "v1"
+        default: "v3"
         required: true
 
 permissions:
@@ -55,4 +55,4 @@ jobs:
             FRAPPE_BRANCH=version-15
           secret-files: |
             "apps_json=${{ github.workspace }}/apps.json"
-          tags: ${{ env.IMAGE }}:${{ inputs.tag || 'v1' }}
+          tags: ${{ env.IMAGE }}:${{ inputs.tag || 'v3' }}

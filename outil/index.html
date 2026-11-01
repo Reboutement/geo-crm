@@ -80,6 +80,8 @@ svg text{fill:var(--muted);font:11px var(--mono)}
 .hidden-print{}
 @media (prefers-reduced-motion:no-preference){section.on{animation:in .25s ease}@keyframes in{from{opacity:.4;transform:translateY(4px)}}}
 @media(max-width:560px){nav button small{display:none}nav button{min-height:48px}.client input{width:100%}}
+.msg{padding:12px 14px;border-radius:8px;font-size:.93rem;margin-top:10px}
+.msg.ok{background:var(--good-soft)}.msg.err{background:var(--bad-soft)}
 </style></head><body>
 
 <div class="wrap">
@@ -193,6 +195,20 @@ svg text{fill:var(--muted);font:11px var(--mono)}
     <div class="compare" id="compare"></div>
     <div class="warnbox" id="honest"></div>
     <div class="row" style="margin-top:16px"><button class="act ghost" id="hidePrice">Masquer le prix</button></div>
+  </div>
+
+  <h3>Envoyer ce prospect au CRM</h3>
+  <div class="card">
+    <p class="lead" style="margin-bottom:12px">À la fin de la visite : le prospect est enregistré dans le CRM avec le résumé du diagnostic, comme prospect chaud.</p>
+    <div class="grid2">
+      <div class="q" style="border:0;padding:0"><label class="t" for="crmCommercial">Votre nom (commercial)</label><input id="crmCommercial" autocomplete="name"></div>
+      <div class="q" style="border:0;padding:0"><label class="t" for="crmPhone">Téléphone du client</label><input id="crmPhone" type="tel" inputmode="tel"></div>
+      <div class="q" style="border:0;padding:0"><label class="t" for="crmEmail">E-mail du client</label><input id="crmEmail" type="email"></div>
+      <div class="q" style="border:0;padding:0;align-content:end"><span class="hint">Le nom et l'adresse sont ceux saisis en haut de page.</span></div>
+    </div>
+    <div class="row" style="margin-top:12px;align-items:flex-start"><input id="crmOk" type="checkbox" style="width:22px;min-height:22px;margin-top:2px"><label for="crmOk">Le client accepte d'être recontacté au sujet de son logement et que ces informations soient enregistrées.</label></div>
+    <div class="row" style="margin-top:14px"><button class="act" id="crmSend" type="button">Envoyer au CRM</button></div>
+    <div id="crmOut" role="status" aria-live="polite"></div>
   </div>
 </section>
 </div>
@@ -329,6 +345,41 @@ $('#hidePrice').onclick=()=>{$('#priceBlock').hidden=true;$('#reveal').hidden=fa
 costDefs.forEach(c=>addCost(c,(store.costs&&store.costs[c[0]])??c[3]));
 $('#addRoom').onclick=()=>{addRoom();save()};
 try{for(const [k,v] of Object.entries(store)){if(k==='rooms'||k==='costs')continue;if(k.startsWith('r:')){const r=$(`input[name=${k.slice(2)}][value="${v}"]`);if(r)r.checked=true}else{const e=document.getElementById(k);if(e)e.value=v}}}catch(e){}
+
+/* ===== Envoi au CRM ===== */
+const CONFIG={endpoint:'https://crm.gregorytordjman.com/api/method/geo_leads.api.create_lead'};
+function visitSummary(){
+  const L=[];
+  const v=id=>($(id)||{}).value||'';
+  L.push('Logement : '+[v('#surface')&&v('#surface')+' m²',v('#occ')&&v('#occ')+' occupant(s)',v('#built')&&'construit en '+v('#built'),v('#insul')&&'isolation : '+v('#insul'),v('#vent')&&'ventilation : '+v('#vent')].filter(Boolean).join(', '));
+  if(v('#reno'))L.push('Travaux : '+v('#reno'));
+  if(v('#exist'))L.push('Solutions déjà essayées : '+v('#exist'));
+  const lv=['jamais','parfois','souvent','toujours'];
+  L.push('Ressenti du client : '+imp.map(([k,l])=>{const c=document.querySelector(`input[name=${k}]:checked`);return (l.split(':')[0])+' = '+lv[c?+c.value:0]}).join(' ; '));
+  const rs=rooms().filter(r=>r.n||r.h||r.t).map((r,i)=>{const tr=document.querySelectorAll('#meas tbody tr')[i];const vd=tr?tr.querySelector('.vd .pill'):null;return `${r.n||'Pièce'} : ${r.t||'?'} °C, HR ${r.h||'?'} %, mur ${r.w||'?'} %`+(vd?` (${vd.textContent})`:'')});
+  if(rs.length)L.push('Relevés :\n'+rs.join('\n'));
+  const c=costsData();
+  L.push('Coûts annuels estimés : '+costDefs.map(d=>d[1].split(':')[0]+' '+(c[d[0]]||0)+' €').join(', ')+' — total '+eur(annual())+' / an, depuis '+num('#years')+' an(s)');
+  if(!$('#priceBlock').hidden)L.push('Prix présenté : '+eur(num('#priceIn'))+' (réduction des coûts retenue : '+num('#eff')+' %)');
+  const notes=ice.map((q,i)=>{const t=v('#ice'+i).trim();return t?q[1]+' : '+t:''}).filter(Boolean);
+  if(notes.length)L.push('Notes de découverte :\n'+notes.join('\n'));
+  return L.join('\n');
+}
+$('#crmSend').onclick=async()=>{
+  const o=$('#crmOut'),say=(t,c)=>{o.innerHTML=`<div class="msg ${c}">${t}</div>`};
+  const name=$('#clientName').value.trim(),phone=$('#crmPhone').value.trim();
+  if(!name||phone.replace(/\D/g,'').length<9)return say('Renseignez le nom du client (en haut de page) et un téléphone valide.','err');
+  if(!$('#crmOk').checked)return say('Cochez l\'accord du client pour l\'enregistrer.','err');
+  const addr=$('#clientAddr').value.trim(),zip=(addr.match(/\b\d{5}\b/)||[''])[0];
+  const lead={type:'diagnostic_visite',source:'outil-visite',name,phone,email:$('#crmEmail').value.trim(),zip,commercial:$('#crmCommercial').value.trim(),note:addr?'Adresse du logement : '+addr:'',summary:visitSummary(),page:location.href,at:new Date().toISOString()};
+  $('#crmSend').disabled=true;
+  try{
+    const r=await fetch(CONFIG.endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(lead)});
+    if(!r.ok)throw new Error('http '+r.status);
+    say('Prospect enregistré dans le CRM avec le résumé de la visite.','ok');
+  }catch(e){say('Envoi impossible pour le moment. Vérifiez la connexion et réessayez : les données de la page sont conservées.','err')}
+  $('#crmSend').disabled=false;
+};
 document.addEventListener('input',()=>{refreshMeas();refreshCosts();save()});
 refreshMeas();refreshCosts();
 </script>
