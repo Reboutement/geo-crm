@@ -1,0 +1,336 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Diagnostic Humidité</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: sticky three-step rail on top, one working panel at a time, big touch targets for use side by side with a client */
+:root{
+  --bg:#f3f5f4; --surface:#ffffff; --fg:#17262b; --muted:#5a6b70; --line:#d6dedc;
+  --accent:#0d6b73; --accent-fg:#ffffff; --accent-soft:#dcefef;
+  --good:#2d7a45; --warn:#a86a00; --bad:#b3372c; --bad-soft:#f7e1de; --warn-soft:#f6ead2; --good-soft:#dff0e4;
+  --display:'Fraunces',Georgia,serif; --body:'Public Sans',system-ui,sans-serif; --mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f1a1d; --surface:#17262a; --fg:#e6eeee; --muted:#93a8ab; --line:#2b3f44;
+  --accent:#4fc0c8; --accent-fg:#06202a; --accent-soft:#1b3a40;
+  --good:#6cc388; --warn:#e0a94a; --bad:#ee7b6e; --bad-soft:#3b2220; --warn-soft:#3a2f18; --good-soft:#1b3324; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f1a1d; --surface:#17262a; --fg:#e6eeee; --muted:#93a8ab; --line:#2b3f44;
+  --accent:#4fc0c8; --accent-fg:#06202a; --accent-soft:#1b3a40;
+  --good:#6cc388; --warn:#e0a94a; --bad:#ee7b6e; --bad-soft:#3b2220; --warn-soft:#3a2f18; --good-soft:#1b3324; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font:16px/1.5 var(--body);padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:10}
+.wrap{max-width:980px;margin:0 auto}
+header{padding-block:20px 12px;display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap}
+h1{font:700 clamp(1.5rem,4vw,2rem)/1.1 var(--display);margin:0;text-wrap:balance}
+header p{margin:4px 0 0;color:var(--muted);font-size:.9rem}
+.client{display:flex;gap:8px;flex-wrap:wrap}
+.client input{width:200px}
+nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);padding-block:8px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+nav button{font:500 .95rem var(--body);text-align:left;padding:12px 14px;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:8px;cursor:pointer;min-height:56px}
+nav button small{display:block;color:var(--muted);font-size:.75rem;font-weight:400}
+nav button[aria-selected="true"]{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 -3px 0 var(--accent)}
+section{display:none;padding-block:20px}
+section.on{display:block}
+h2{font:700 1.4rem/1.2 var(--display);margin:0 0 4px}
+.lead{color:var(--muted);margin:0 0 20px;max-width:65ch}
+h3{font:600 .8rem var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:28px 0 10px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px}
+.q{display:grid;gap:8px;padding:14px 0;border-top:1px solid var(--line)}
+.q:first-child{border-top:0;padding-top:0}
+.q label.t{font-weight:600}
+.q .hint{color:var(--muted);font-size:.85rem}
+input,select,textarea{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px 12px;width:100%;min-height:44px}
+textarea{min-height:64px;resize:vertical}
+input:focus-visible,select:focus-visible,textarea:focus-visible,button:focus-visible{outline:3px solid var(--accent);outline-offset:1px}
+.scale{display:flex;gap:6px;flex-wrap:wrap}
+.scale label{flex:1 1 70px;position:relative}
+.scale input{position:absolute;opacity:0;inset:0;min-height:0}
+.scale span{display:block;text-align:center;padding:10px 6px;border:1px solid var(--line);border-radius:6px;font-size:.85rem;background:var(--bg);cursor:pointer}
+.scale input:checked+span{background:var(--accent);color:var(--accent-fg);border-color:var(--accent);font-weight:600}
+.scale input:focus-visible+span{outline:3px solid var(--accent);outline-offset:1px}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;min-width:640px}
+th{font:600 .72rem var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:left;padding:6px 6px}
+td{padding:4px 4px;vertical-align:middle}
+td input{min-height:40px;padding:6px 8px}
+td.num{font-family:var(--mono);font-size:.9rem;white-space:nowrap}
+.pill{display:inline-block;padding:3px 10px;border-radius:99px;font-size:.8rem;font-weight:600}
+.pill.good{background:var(--good-soft);color:var(--good)}.pill.warn{background:var(--warn-soft);color:var(--warn)}.pill.bad{background:var(--bad-soft);color:var(--bad)}.pill.na{background:var(--accent-soft);color:var(--muted)}
+button.act{font:600 .95rem var(--body);padding:11px 18px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-fg);cursor:pointer;min-height:44px}
+button.ghost{background:transparent;color:var(--accent)}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.summary{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:16px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px}
+.stat .k{font-size:.78rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.stat .v{font:700 1.7rem/1.2 var(--display);font-variant-numeric:tabular-nums}
+.stat .s{font-size:.82rem;color:var(--muted)}
+.stat.bad .v{color:var(--bad)}
+.reveal{margin-top:24px;border:2px dashed var(--line);border-radius:12px;padding:20px;text-align:center}
+.price{font:700 clamp(2.2rem,8vw,3.6rem)/1 var(--display);color:var(--accent);font-variant-numeric:tabular-nums}
+.compare{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px}
+.compare .card h4{margin:0 0 8px;font:700 1.05rem var(--display)}
+.compare .big{font:700 1.6rem var(--display);font-variant-numeric:tabular-nums}
+.note{font-size:.83rem;color:var(--muted);max-width:70ch}
+.warnbox{background:var(--warn-soft);color:var(--fg);border-left:4px solid var(--warn);border-radius:6px;padding:10px 14px;font-size:.88rem;margin-top:12px}
+svg{width:100%;height:auto;display:block}
+svg text{fill:var(--muted);font:11px var(--mono)}
+.hidden-print{}
+@media (prefers-reduced-motion:no-preference){section.on{animation:in .25s ease}@keyframes in{from{opacity:.4;transform:translateY(4px)}}}
+@media(max-width:560px){nav button small{display:none}nav button{min-height:48px}.client input{width:100%}}
+</style></head><body>
+
+<div class="wrap">
+<header>
+  <div>
+    <h1>Diagnostic Humidité</h1>
+    <p>Visite à domicile, à remplir avec le client</p>
+  </div>
+  <div class="client">
+    <input id="clientName" placeholder="Nom du client" aria-label="Nom du client">
+    <input id="clientAddr" placeholder="Adresse du logement" aria-label="Adresse du logement">
+  </div>
+</header>
+
+<nav role="tablist" aria-label="Étapes">
+  <button role="tab" aria-selected="true" data-tab="p1">1. Faire connaissance<small>Brise-glace</small></button>
+  <button role="tab" aria-selected="false" data-tab="p2">2. Diagnostic du logement<small>Ressenti et mesures</small></button>
+  <button role="tab" aria-selected="false" data-tab="p3">3. Coût et solution<small>Bilan chiffré</small></button>
+</nav>
+
+<!-- PHASE 1 -->
+<section id="p1" class="on">
+  <h2>Faire connaissance</h2>
+  <p class="lead">Laissez le client parler de lui et de sa maison. Notez ses mots exacts, vous les reprendrez au bilan.</p>
+  <div class="card" id="icebreakers"></div>
+  <div class="row" style="margin-top:16px"><button class="act" data-go="p2">Passer au diagnostic</button></div>
+</section>
+
+<!-- PHASE 2 -->
+<section id="p2">
+  <h2>Diagnostic du logement</h2>
+  <p class="lead">D'abord ce que vit le client au quotidien, ensuite ce que mesurent vos instruments.</p>
+
+  <h3>Ce que le client constate (0 = jamais, 3 = en permanence)</h3>
+  <div class="card" id="impacts"></div>
+
+  <h3>Le logement</h3>
+  <div class="card grid2">
+    <div class="q" style="border:0;padding:0"><label class="t" for="surface">Surface habitable (m²)</label><input id="surface" type="number" min="0" inputmode="numeric"></div>
+    <div class="q" style="border:0;padding:0"><label class="t" for="occ">Occupants</label><input id="occ" type="number" min="0" inputmode="numeric"></div>
+    <div class="q" style="border:0;padding:0"><label class="t" for="built">Année de construction</label><input id="built" type="number" inputmode="numeric" placeholder="ex. 1974"></div>
+    <div class="q" style="border:0;padding:0"><label class="t" for="insul">Isolation</label>
+      <select id="insul"><option value="">Choisir</option><option>Aucune</option><option>Partielle (combles seuls)</option><option>Intérieure</option><option>Extérieure</option><option>Ne sait pas</option></select></div>
+    <div class="q" style="border:0;padding:0"><label class="t" for="vent">Ventilation</label>
+      <select id="vent"><option value="">Choisir</option><option>Aucune</option><option>Aérations naturelles</option><option>VMC simple flux</option><option>VMC double flux</option></select></div>
+    <div class="q" style="border:0;padding:0"><label class="t" for="reno">Travaux déjà réalisés</label><input id="reno" placeholder="ex. fenêtres PVC en 2019"></div>
+    <div class="q" style="border:0;padding:0;grid-column:1/-1"><label class="t" for="exist">Solutions déjà essayées contre l'humidité</label><textarea id="exist" placeholder="Déshumidificateur, peinture anti-salpêtre, produits, artisans consultés, coût et résultat"></textarea></div>
+  </div>
+
+  <h3>Relevés sur place</h3>
+  <div class="card">
+    <div class="tablewrap">
+      <table id="meas">
+        <thead><tr><th>Pièce</th><th>Temp. °C</th><th>HR %</th><th>Mur % (pointes)</th><th>Point de rosée</th><th>Mur froid ?</th><th>Verdict</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="row" style="margin-top:10px"><button class="act ghost" id="addRoom">Ajouter une pièce</button></div>
+    <p class="note" style="margin-top:12px">Le point de rosée est calculé avec la formule de Magnus à partir de la température et de l'humidité relative. Un mur dont la température de surface est proche ou sous ce point voit de la condensation. Repères : HR idéale 40 à 60 %, au-dessus de 70 % le risque de moisissures est avéré.</p>
+  </div>
+  <div id="diagSummary" class="summary"></div>
+  <div class="row" style="margin-top:16px"><button class="act" data-go="p3">Passer au bilan chiffré</button></div>
+</section>
+
+<!-- PHASE 3 -->
+<section id="p3">
+  <h2>Ce que l'humidité coûte au foyer</h2>
+  <p class="lead">Chaque ligne est une estimation à valider avec le client avec ses propres factures. Les valeurs de départ sont des exemples à remplacer.</p>
+
+  <h3>Coûts annuels liés à l'humidité</h3>
+  <div class="card">
+    <div class="tablewrap">
+      <table id="costs" style="min-width:560px">
+        <thead><tr><th>Poste</th><th>Montant € / an</th><th>Base de calcul avec le client</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <h3>Hypothèses</h3>
+  <div class="card grid2">
+    <div class="q" style="border:0;padding:0"><label class="t" for="years">Années depuis l'achat du logement</label><input id="years" type="number" min="0" value="8" inputmode="numeric"></div>
+    <div class="q" style="border:0;padding:0"><label class="t" for="horizon">Horizon de projection (années)</label><input id="horizon" type="number" min="1" max="30" value="10" inputmode="numeric"></div>
+    <div class="q" style="border:0;padding:0"><label class="t" for="eff">Part des coûts supprimée par la solution (%)</label><input id="eff" type="number" min="0" max="100" value="50" inputmode="numeric">
+      <span class="hint">À fixer d'après des résultats que vous pouvez documenter et montrer au client, pas d'après un souhait.</span></div>
+    <div class="q" style="border:0;padding:0"><label class="t" for="infl">Hausse annuelle des coûts (%)</label><input id="infl" type="number" min="0" max="15" step="0.5" value="2" inputmode="decimal"></div>
+  </div>
+
+  <div id="costSummary" class="summary"></div>
+
+  <h3>Cumul des dépenses</h3>
+  <div class="card"><div id="chart"></div><div class="note" id="chartNote"></div></div>
+
+  <div class="reveal" id="reveal">
+    <p style="margin:0 0 12px">Une fois le coût de l'humidité posé, vous pouvez présenter la solution.</p>
+    <div class="row" style="justify-content:center;gap:12px">
+      <label for="priceIn" style="font-weight:600">Prix de la solution (€ TTC)</label>
+      <input id="priceIn" type="number" min="0" value="4000" inputmode="numeric" style="width:140px">
+      <button class="act" id="showPrice">Révéler le prix</button>
+    </div>
+  </div>
+
+  <div id="priceBlock" hidden>
+    <div class="reveal" style="border-style:solid">
+      <div class="k" style="color:var(--muted);text-transform:uppercase;letter-spacing:.08em;font-size:.78rem">Investissement unique</div>
+      <div class="price" id="priceBig"></div>
+    </div>
+    <div id="roiSummary" class="summary"></div>
+
+    <h3>Qui paie quoi</h3>
+    <div class="compare" id="compare"></div>
+    <div class="warnbox" id="honest"></div>
+    <div class="row" style="margin-top:16px"><button class="act ghost" id="hidePrice">Masquer le prix</button></div>
+  </div>
+</section>
+</div>
+
+<script>
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const eur=n=>new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR',maximumFractionDigits:0}).format(isFinite(n)?n:0);
+const num=id=>parseFloat($(id).value)||0;
+let store={};
+try{store=JSON.parse(localStorage.getItem('diag-humidite')||'{}')}catch(e){}
+const save=()=>{try{const d={};$$('input[id],select[id],textarea[id]').forEach(e=>{if(e.type==='radio')return;d[e.id]=e.value});
+  $$('input[type=radio]:checked').forEach(r=>d['r:'+r.name]=r.value);d.rooms=rooms();d.costs=costsData();localStorage.setItem('diag-humidite',JSON.stringify(d))}catch(e){}};
+
+/* tabs */
+function go(id){$$('section').forEach(s=>s.classList.toggle('on',s.id===id));$$('nav button').forEach(b=>b.setAttribute('aria-selected',b.dataset.tab===id));scrollTo({top:0})}
+$$('nav button').forEach(b=>b.onclick=()=>go(b.dataset.tab));
+$$('[data-go]').forEach(b=>b.onclick=()=>go(b.dataset.go));
+
+/* phase 1 */
+const ice=[
+ ['Depuis quand vivez-vous ici, et qu\'est-ce qui vous a fait choisir cette maison ?','Histoire du logement'],
+ ['Qui vit avec vous à la maison ? Enfants, personnes âgées, animaux ?','Foyer et personnes sensibles'],
+ ['Quelle est votre pièce préférée, et celle où vous aimez le moins rester ?','Ressenti du confort'],
+ ['Qu\'est-ce que vous aimeriez changer en premier chez vous ?','Priorités du client'],
+ ['Êtes-vous propriétaire depuis longtemps ? Pensez-vous rester ou revendre ?','Horizon de détention'],
+ ['Avez-vous déjà fait des travaux ? Comment ça s\'est passé ?','Expérience avec les artisans'],
+ ['Qui prend les décisions de dépenses importantes dans le foyer ?','Décideurs à associer']
+];
+$('#icebreakers').innerHTML=ice.map((q,i)=>`<div class="q"><label class="t" for="ice${i}">${q[0]}</label><span class="hint">Objectif : ${q[1]}</span><textarea id="ice${i}" placeholder="Notes"></textarea></div>`).join('');
+
+/* phase 2: impacts */
+const imp=[['paint','Peintures et papiers peints qui cloquent, noircissent ou s\'écaillent'],['clean','Ménage supplémentaire : moisissures, joints, vitres en buée'],['heat','Sensation de froid humide, chauffage qui tourne beaucoup'],['health','Santé : toux, allergies, asthme, rhumes répétés'],['air','Odeur de renfermé, air lourd'],['wear','Usure : meubles, literie, vêtements, bois, menuiseries'],['stain','Taches visibles, salpêtre, auréoles']];
+$('#impacts').innerHTML=imp.map(([k,l])=>`<div class="q"><span class="t">${l}</span><div class="scale">${[0,1,2,3].map(v=>`<label><input type="radio" name="${k}" value="${v}"${v==0?' checked':''}><span>${['Jamais','Parfois','Souvent','Toujours'][v]}</span></label>`).join('')}</div></div>`).join('');
+
+/* measures */
+const rowHTML=(r={})=>`<tr><td><input class="rn" value="${r.n||''}" placeholder="Pièce"></td>
+<td><input class="rt" type="number" step="0.1" value="${r.t??''}" inputmode="decimal"></td>
+<td><input class="rh" type="number" step="1" value="${r.h??''}" inputmode="decimal"></td>
+<td><input class="rw" type="number" step="0.1" value="${r.w??''}" inputmode="decimal"></td>
+<td class="num dp">–</td>
+<td><input class="rs" type="number" step="0.1" value="${r.s??''}" inputmode="decimal" placeholder="T° mur"></td>
+<td class="vd"><span class="pill na">à mesurer</span></td></tr>`;
+function addRoom(r){$('#meas tbody').insertAdjacentHTML('beforeend',rowHTML(r))}
+const dew=(t,h)=>{const a=17.62,b=243.12,g=Math.log(h/100)+a*t/(b+t);return b*g/(a-g)};
+function verdict(t,h,w,s){
+  if(h===''||t==='')return ['na','à mesurer',null];
+  const dp=dew(t,h);let lvl=0,why=[];
+  if(h>70){lvl=Math.max(lvl,2);why.push('HR élevée')}else if(h>60){lvl=Math.max(lvl,1);why.push('HR haute')}else if(h<30){lvl=Math.max(lvl,1);why.push('air sec')}
+  if(w!==''&&w>20){lvl=Math.max(lvl,2);why.push('mur humide')}else if(w!==''&&w>12){lvl=Math.max(lvl,1);why.push('mur à surveiller')}
+  if(s!==''&&s<=dp+1){lvl=Math.max(lvl,2);why.push('condensation')}
+  return [['good','conforme'],['warn','à surveiller'],['bad','problème']][lvl].concat([dp]).slice(0,2).concat([dp,why.join(', ')]);
+}
+function rooms(){return $$('#meas tbody tr').map(tr=>({n:tr.querySelector('.rn').value,t:tr.querySelector('.rt').value,h:tr.querySelector('.rh').value,w:tr.querySelector('.rw').value,s:tr.querySelector('.rs').value}))}
+function refreshMeas(){
+  let bad=0,warn=0,n=0,hs=[];
+  $$('#meas tbody tr').forEach(tr=>{
+    const g=c=>{const v=tr.querySelector(c).value;return v===''?'':parseFloat(v)};
+    const t=g('.rt'),h=g('.rh'),w=g('.rw'),s=g('.rs');
+    const v=verdict(t,h,w,s);
+    tr.querySelector('.dp').textContent=v[2]!=null?v[2].toFixed(1)+' °C':'–';
+    tr.querySelector('.vd').innerHTML=`<span class="pill ${v[0]}">${v[1]}</span>${v[3]?`<div class="note">${v[3]}</div>`:''}`;
+    if(v[0]==='bad')bad++;if(v[0]==='warn')warn++;if(v[0]!=='na'){n++;hs.push(h)}
+  });
+  const sc=imp.reduce((a,[k])=>a+(parseInt(($(`input[name=${k}]:checked`)||{}).value)||0),0);
+  const avg=hs.length?hs.reduce((a,b)=>a+b,0)/hs.length:null;
+  $('#diagSummary').innerHTML=`
+   <div class="stat"><div class="k">Ressenti du client</div><div class="v">${sc} / ${imp.length*3}</div><div class="s">${sc>=imp.length*1.5?'Gêne forte':sc>=imp.length*.7?'Gêne modérée':'Gêne faible'}</div></div>
+   <div class="stat ${bad?'bad':''}"><div class="k">Pièces mesurées</div><div class="v">${n}</div><div class="s">${bad} en problème, ${warn} à surveiller</div></div>
+   <div class="stat"><div class="k">HR moyenne</div><div class="v">${avg==null?'–':avg.toFixed(0)+' %'}</div><div class="s">Repère : 40 à 60 %</div></div>`;
+}
+
+/* phase 3 */
+const costDefs=[
+ ['paint','Peintures et réfections','Coût d\'une remise en peinture ÷ fréquence en années',600],
+ ['clean','Ménage et produits anti-moisissure','Heures par mois × 12 × taux horaire + produits',240],
+ ['heat','Surconsommation de chauffage','Facture annuelle × surcoût estimé avec le client',350],
+ ['health','Santé : consultations, médicaments','Reste à charge annuel déclaré',150],
+ ['wear','Usure : literie, textiles, meubles, menuiseries','Remplacements sur les dernières années ÷ années',200],
+ ['exist','Solutions actuelles : déshumidificateur, produits','Électricité + consommables + achats ÷ années',180]
+];
+function addCost(c,v){$('#costs tbody').insertAdjacentHTML('beforeend',`<tr><td>${c[1]}</td><td><input class="cv" data-k="${c[0]}" type="number" min="0" inputmode="numeric" value="${v}"></td><td class="note">${c[2]}</td></tr>`)}
+function costsData(){const d={};$$('.cv').forEach(e=>d[e.dataset.k]=e.value);return d}
+const annual=()=>$$('.cv').reduce((a,e)=>a+(parseFloat(e.value)||0),0);
+function cum(a,years,infl){let t=0,c=a;for(let i=0;i<years;i++){t+=c;c*=1+infl/100}return t}
+
+function refreshCosts(){
+  const a=annual(),y=num('#years'),H=Math.max(1,num('#horizon')),inf=num('#infl'),eff=Math.min(100,num('#eff'))/100,price=num('#priceIn');
+  const past=a*y, fut=cum(a,H,inf), saved=fut*eff, annSaved=a*eff;
+  $('#costSummary').innerHTML=`
+   <div class="stat bad"><div class="k">Coût par an</div><div class="v">${eur(a)}</div><div class="s">${eur(a/12)} par mois</div></div>
+   <div class="stat bad"><div class="k">Déjà dépensé depuis l'achat</div><div class="v">${eur(past)}</div><div class="s">sur ${y} an${y>1?'s':''}, à coût constant</div></div>
+   <div class="stat bad"><div class="k">À venir sur ${H} ans</div><div class="v">${eur(fut)}</div><div class="s">si rien ne change, hausse ${inf} % par an</div></div>`;
+  drawChart(a,H,inf,price,eff);
+  if(!$('#priceBlock').hidden)refreshROI(a,y,H,inf,eff,price,annSaved,saved);
+}
+function drawChart(a,H,inf,price,eff){
+  const W=720,Ht=300,L=62,R=18,T=16,B=36;
+  const costAfter=[],costNow=[];let c=a;let t0=0,t1=price;
+  for(let i=0;i<=H;i++){costNow.push(t0);costAfter.push(t1);t0+=c;t1+=c*(1-eff);c*=1+inf/100}
+  const showSol=!$('#priceBlock').hidden;
+  const max=Math.max(...costNow,showSol?Math.max(...costAfter):0,1);
+  const step=[1000,2000,5000,10000,20000,50000,100000].find(s=>max/s<=6)||200000;
+  const top=Math.ceil(max/step)*step;
+  const X=i=>L+i*(W-L-R)/H, Y=v=>T+(1-v/top)*(Ht-T-B);
+  const line=(arr,col,dash='')=>`<polyline fill="none" stroke="${col}" stroke-width="2.5" ${dash?`stroke-dasharray="${dash}"`:''} points="${arr.map((v,i)=>X(i)+','+Y(v)).join(' ')}"/>`;
+  let g='';for(let v=0;v<=top;v+=step)g+=`<line x1="${L}" x2="${W-R}" y1="${Y(v)}" y2="${Y(v)}" stroke="var(--line)"/><text x="${L-6}" y="${Y(v)+4}" text-anchor="end">${v>=1000?v/1000+' k€':v+' €'}</text>`;
+  const xs=Math.ceil(H/10);for(let i=0;i<=H;i+=xs)g+=`<text x="${X(i)}" y="${Ht-12}" text-anchor="middle">${i} an${i>1?'s':''}</text>`;
+  const ex=H,last=costNow[H];
+  let svg=`<svg viewBox="0 0 ${W} ${Ht}" role="img" aria-label="Cumul des dépenses sur ${H} ans">${g}${line(costNow,'var(--bad)')}<circle cx="${X(ex)}" cy="${Y(last)}" r="4" fill="var(--bad)"/><text x="${X(ex)-6}" y="${Y(last)-8}" text-anchor="end" style="fill:var(--bad)">${eur(last)}</text>`;
+  if(showSol){svg+=line(costAfter,'var(--accent)');const la=costAfter[H];svg+=`<circle cx="${X(ex)}" cy="${Y(la)}" r="4" fill="var(--accent)"/><text x="${X(ex)-6}" y="${Y(la)+16}" text-anchor="end" style="fill:var(--accent)">${eur(la)}</text>`}
+  $('#chart').innerHTML=svg+'</svg>';
+  $('#chartNote').innerHTML=`<span style="color:var(--bad)">■</span> Sans solution`+(showSol?` &nbsp; <span style="color:var(--accent)">■</span> Avec la solution (prix + coûts restants)`:'');
+}
+function refreshROI(a,y,H,inf,eff,price,annSaved,saved){
+  $('#priceBig').textContent=eur(price);
+  // payback year with inflation
+  let pb=null,acc=0,c=a*eff;for(let i=1;i<=60;i++){acc+=c;c*=1+inf/100;if(acc>=price){pb=i;break}}
+  const net=saved-price;
+  $('#roiSummary').innerHTML=`
+   <div class="stat"><div class="k">Retour sur investissement</div><div class="v">${annSaved>0&&pb?pb+' an'+(pb>1?'s':''):'Non atteint'}</div><div class="s">avec ${Math.round(eff*100)} % des coûts supprimés</div></div>
+   <div class="stat"><div class="k">Économie sur ${H} ans</div><div class="v">${eur(saved)}</div><div class="s">${eur(annSaved)} par an la première année</div></div>
+   <div class="stat ${net<0?'bad':''}"><div class="k">Gain net après achat</div><div class="v">${eur(net)}</div><div class="s">économie − prix, sur ${H} ans</div></div>
+   <div class="stat"><div class="k">Prix ramené au mois</div><div class="v">${eur(price/(H*12))}</div><div class="s">sur ${H} ans, contre ${eur(a/12)} de coûts actuels</div></div>`;
+  $('#compare').innerHTML=`
+   <div class="card"><h4>Locataire : subit</h4><p>Paie chaque année les effets de l'humidité sans pouvoir agir sur le bâti. Aucun actif à la fin.</p><div class="big">${eur(a)} / an</div></div>
+   <div class="card"><h4>Propriétaire : agit</h4><p>Un investissement unique sur son bien, qui reste attaché au logement et se retrouve à la revente.</p><div class="big">${eur(price)} une fois</div></div>`;
+  $('#honest').innerHTML=`Le retour sur investissement ci-dessus ne vaut que ce que valent les chiffres saisis. Avant de conclure, vérifiez avec le client que chaque poste correspond à une dépense réelle et que le pourcentage de coûts supprimés repose sur des résultats que vous pouvez montrer.`;
+}
+$('#showPrice').onclick=()=>{$('#priceBlock').hidden=false;$('#reveal').hidden=true;refreshCosts();$('#priceBlock').scrollIntoView({behavior:'smooth',block:'start'})};
+$('#hidePrice').onclick=()=>{$('#priceBlock').hidden=true;$('#reveal').hidden=false;refreshCosts()};
+
+/* init */
+(store.rooms&&store.rooms.length?store.rooms:[{n:'Salon',t:20,h:68,w:14,s:14},{n:'Chambre',t:18,h:72,w:22,s:12},{n:'Cuisine',t:21,h:58,w:9,s:17}]).forEach(addRoom);
+costDefs.forEach(c=>addCost(c,(store.costs&&store.costs[c[0]])??c[3]));
+$('#addRoom').onclick=()=>{addRoom();save()};
+try{for(const [k,v] of Object.entries(store)){if(k==='rooms'||k==='costs')continue;if(k.startsWith('r:')){const r=$(`input[name=${k.slice(2)}][value="${v}"]`);if(r)r.checked=true}else{const e=document.getElementById(k);if(e)e.value=v}}}catch(e){}
+document.addEventListener('input',()=>{refreshMeas();refreshCosts();save()});
+refreshMeas();refreshCosts();
+</script>
+
+</body></html>

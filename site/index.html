@@ -1,0 +1,640 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Geo Engineering | Diagnostic humidité gratuit</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Public+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: one-page landing. Hero with cross-section drawing, profile switcher with SONCAS grid, 3-step method, lead form. Same tokens as the visit tool. */
+:root{
+  --bg:#f4f6f9; --surface:#ffffff; --fg:#12263a; --muted:#55667a; --line:#d8e0e8;
+  --accent:#1b6fb5; --accent-fg:#ffffff; --accent-soft:#e0edf9;
+  --good:#2d7a45; --warn:#a86a00; --bad:#b3372c; --bad-soft:#f7e1de; --warn-soft:#f6ead2; --good-soft:#dff0e4;
+  --wall:#e9e4da; --wall-line:#b9b2a3; --damp:#3d8f99;
+  --display:'Fraunces',Georgia,serif; --body:'Public Sans',system-ui,sans-serif; --mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0d1a28; --surface:#152436; --fg:#e6eeee; --muted:#9bb0c4; --line:#2a3f55;
+  --accent:#5aa9e6; --accent-fg:#07182a; --accent-soft:#1a3350;
+  --good:#6cc388; --warn:#e0a94a; --bad:#ee7b6e; --bad-soft:#3b2220; --warn-soft:#3a2f18; --good-soft:#1b3324;
+  --wall:#243649; --wall-line:#46607a; --damp:#5aa9e6; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d1a28; --surface:#152436; --fg:#e6eeee; --muted:#9bb0c4; --line:#2a3f55;
+  --accent:#5aa9e6; --accent-fg:#07182a; --accent-soft:#1a3350;
+  --good:#6cc388; --warn:#e0a94a; --bad:#ee7b6e; --bad-soft:#3b2220; --warn-soft:#3a2f18; --good-soft:#1b3324;
+  --wall:#243649; --wall-line:#46607a; --damp:#5aa9e6; color-scheme:dark}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--fg);font:16px/1.55 var(--body);margin:0;padding-inline:max(16px,env(safe-area-inset-left,0px)) max(16px,env(safe-area-inset-right,0px));padding-block:0 0}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);background:var(--bg);z-index:10}
+.wrap{max-width:1040px;margin:0 auto}
+.logo{height:48px;width:auto;background:#fff;border-radius:8px;padding:4px 8px;display:block}
+.proof{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:8px}
+.proof div{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px}
+.proof b{font:700 2rem var(--display);color:var(--accent);display:block;font-variant-numeric:tabular-nums}
+.proof span{color:var(--muted);font-size:.9rem}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px}.chips span{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:7px 14px;font-size:.9rem}
+footer.dark{background:#10263d;color:#c4d3e3;margin-inline:calc(50% - 50vw);padding-inline:max(16px,calc(50vw - 520px));border-top:0}
+footer.dark img{height:56px;width:auto;display:block;margin-bottom:12px}
+footer.dark code{font:500 .9rem var(--mono);color:#fff;user-select:all}
+h1,h2,h3,h4{font-family:var(--display);text-wrap:balance;margin:0}
+h1{font-weight:700;font-size:clamp(2rem,6vw,3.4rem);line-height:1.05}
+h2{font-weight:700;font-size:clamp(1.5rem,4vw,2.1rem);line-height:1.15}
+.eyebrow{font:500 .78rem var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+.lead{color:var(--muted);font-size:1.1rem;max-width:58ch;margin:16px 0 0}
+nav.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--bg);display:flex;justify-content:space-between;align-items:center;gap:12px;padding-block:12px;border-bottom:1px solid var(--line)}
+nav.top b{font:700 1.15rem var(--display)}
+.btn{font:600 .98rem var(--body);padding:13px 20px;border-radius:8px;border:1px solid var(--accent);background:var(--accent);color:var(--accent-fg);cursor:pointer;min-height:48px;display:inline-flex;align-items:center;justify-content:center;text-align:center}
+a.btn{text-decoration:none}
+.btn.ghost{background:transparent;color:var(--accent)}
+.btn:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible,.tabs button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.hero{display:grid;grid-template-columns:1.05fr .95fr;gap:32px;align-items:center;padding-block:40px 32px}
+.cta{display:flex;gap:10px;flex-wrap:wrap;margin-top:24px}
+.trust{display:flex;gap:18px;flex-wrap:wrap;margin-top:20px;font-size:.88rem;color:var(--muted)}
+.trust span::before{content:"✓ ";color:var(--good);font-weight:700}
+.figure{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px}
+.figure svg{width:100%;height:auto;display:block}
+svg text{font:11px var(--mono);fill:var(--fg)}
+svg .mut{fill:var(--muted)}
+.band{padding-block:48px;border-top:1px solid var(--line)}
+.head{display:grid;gap:8px;margin-bottom:24px;max-width:62ch}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px}
+.tabs button{font:600 .98rem var(--body);padding:12px 18px;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:99px;cursor:pointer;min-height:48px}
+.tabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.promise{background:var(--accent-soft);border-radius:12px;padding:20px;margin-bottom:16px}
+.promise h3{font-size:1.35rem}
+.promise p{margin:6px 0 0;color:var(--muted)}
+.soncas{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:12px}
+.s{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px;display:grid;grid-template-columns:44px 1fr;gap:14px;align-items:start}
+.s svg{width:44px;height:44px}
+.s h4{font-size:1.02rem;margin:0 0 2px}
+.s p{margin:0;font-size:.93rem;color:var(--muted)}
+.s .tag{font:500 .7rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.step{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:18px}
+.step .t{font:500 .78rem var(--mono);color:var(--accent);letter-spacing:.06em;text-transform:uppercase}
+.step h3{font-size:1.2rem;margin:6px 0}
+.step p{margin:0;color:var(--muted);font-size:.95rem}
+.meas{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:20px}
+.m{border-top:2px solid var(--accent);padding-top:10px}
+.m b{font:500 1.3rem var(--mono);display:block}
+.m span{font-size:.88rem;color:var(--muted)}
+.honest{margin-top:20px;background:var(--warn-soft);border-left:4px solid var(--warn);border-radius:6px;padding:12px 16px;font-size:.93rem;max-width:80ch}
+.formwrap{display:grid;grid-template-columns:.85fr 1.15fr;gap:32px;align-items:start}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px}
+.mode{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+.mode button{font:600 .95rem var(--body);padding:12px;border:1px solid var(--line);background:var(--bg);color:var(--fg);border-radius:8px;cursor:pointer;min-height:56px;line-height:1.25}
+.mode button small{display:block;font-weight:400;color:var(--muted);font-size:.78rem}
+.mode button[aria-pressed="true"]{border-color:var(--accent);background:var(--accent-soft);box-shadow:inset 0 -3px 0 var(--accent)}
+.f{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.f .full{grid-column:1/-1}
+label.l{display:block;font-weight:600;font-size:.88rem;margin-bottom:4px}
+input,select,textarea{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:10px 12px;width:100%;min-height:46px}
+textarea{min-height:70px;resize:vertical}
+.chk{display:flex;gap:8px;flex-wrap:wrap}
+.chk label{display:flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--bg);border-radius:99px;padding:8px 12px;font-size:.88rem;cursor:pointer;min-height:40px}
+.chk input{width:auto;min-height:0}
+.consent{display:flex;gap:10px;align-items:flex-start;font-size:.85rem;color:var(--muted)}
+.consent input{width:20px;min-height:20px;margin-top:2px}
+.msg{padding:12px 14px;border-radius:8px;font-size:.93rem}
+.msg.ok{background:var(--good-soft);color:var(--fg)}.msg.err{background:var(--bad-soft);color:var(--fg)}
+footer{padding-block:32px 48px;border-top:1px solid var(--line);color:var(--muted);font-size:.85rem}
+@media(max-width:820px){.hero,.formwrap{grid-template-columns:1fr}.f{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+
+/* video */
+.video{position:relative;aspect-ratio:16/9;max-width:100%;background:#10263d;border-radius:12px;overflow:hidden;border:1px solid var(--line)}
+.video iframe,.video video{position:absolute;inset:0;width:100%;height:100%;border:0}
+.vcap{font-size:.85rem;color:var(--muted);margin:8px 0 0}
+.video .ph{position:absolute;inset:0;display:grid;place-items:center;color:#c4d3e3;text-align:center;padding:24px;font-size:.95rem}
+/* widget */
+.wbtn{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:max(16px,env(safe-area-inset-bottom,0px));z-index:50;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.wpanel{position:fixed;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(76px + env(safe-area-inset-bottom,0px));z-index:50;width:min(340px,calc(100vw - 32px));background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;box-shadow:0 10px 30px rgba(0,0,0,.3);display:grid;gap:10px}
+.wpanel h4{font-size:1.05rem}
+.wpanel .x{justify-self:end;background:none;border:0;color:var(--muted);cursor:pointer;font-size:1.4rem;line-height:1;min-height:32px}
+
+/* ===== v2 : fond cohérent, navigation, sections ===== */
+body{background:var(--bg)}
+.bg{position:fixed;inset:0;z-index:-1;pointer-events:none;background:
+  radial-gradient(900px 500px at 85% -5%,var(--glow1),transparent 60%),
+  radial-gradient(700px 500px at -5% 35%,var(--glow2),transparent 60%),
+  var(--bg)}
+.bg::after{content:"";position:absolute;inset:0;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:56px 56px;-webkit-mask-image:linear-gradient(to bottom,#000 0,transparent 75%);mask-image:linear-gradient(to bottom,#000 0,transparent 75%)}
+:root{--glow1:rgba(27,111,181,.16);--glow2:rgba(90,169,230,.12);--grid:rgba(18,38,58,.045)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--glow1:rgba(90,169,230,.16);--glow2:rgba(27,111,181,.18);--grid:rgba(255,255,255,.04)}}
+:root[data-theme="dark"]{--glow1:rgba(90,169,230,.16);--glow2:rgba(27,111,181,.18);--grid:rgba(255,255,255,.04)}
+nav.top{background:color-mix(in srgb,var(--bg) 78%,transparent);-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);gap:16px}
+nav.top ul{list-style:none;display:flex;gap:2px;margin:0;padding:0;flex:1;justify-content:center}
+nav.top ul a{display:block;padding:9px 12px;border-radius:99px;font-size:.92rem;font-weight:500;color:var(--muted);text-decoration:none}
+nav.top ul a:hover{color:var(--fg);background:var(--accent-soft)}
+nav.top ul a.on{color:var(--accent);background:var(--accent-soft);font-weight:600}
+.burger{display:none;background:var(--surface);border:1px solid var(--line);border-radius:8px;width:48px;height:48px;cursor:pointer;color:var(--fg);font-size:1.3rem}
+@media(max-width:960px){
+  .burger{display:block;margin-left:auto}
+  nav.top .btn.cta-nav{display:none}
+  nav.top ul{display:none;position:absolute;top:100%;left:0;right:0;flex-direction:column;background:var(--bg);border-bottom:1px solid var(--line);padding:10px 0 16px;gap:0}
+  nav.top.open ul{display:flex}
+  nav.top ul a{border-radius:8px;padding:14px 8px;font-size:1rem}
+}
+.band{border-top:0;padding-block:64px}
+h2{font-size:clamp(1.7rem,4.6vw,2.6rem)}
+.hero{padding-block:48px 24px}
+.hero h1{font-size:clamp(2.1rem,6.4vw,3.8rem)}
+.grad{background:linear-gradient(100deg,var(--accent),#4aa3e0);-webkit-background-clip:text;background-clip:text;color:transparent}
+.rv.in{animation:rise .6s ease both}
+@keyframes rise{from{opacity:.4;transform:translateY(14px)}to{opacity:1;transform:none}}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+.stats div{background:color-mix(in srgb,var(--surface) 80%,transparent);border:1px solid var(--line);border-radius:14px;padding:18px}
+.stats b{font:700 2.2rem/1 var(--display);color:var(--accent);display:block;font-variant-numeric:tabular-nums}
+.stats span{font-size:.88rem;color:var(--muted)}
+.patho{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px}
+.pc{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;display:grid;gap:8px;transition:transform .2s,border-color .2s}
+.pc:hover{transform:translateY(-3px);border-color:var(--accent)}
+.pc h3{font-size:1.15rem}
+.pc p{margin:0;font-size:.93rem;color:var(--muted)}
+.pc .lbl{font:500 .7rem var(--mono);letter-spacing:.08em;text-transform:uppercase;color:var(--accent)}
+.quiz{display:grid;grid-template-columns:1.1fr .9fr;gap:20px;align-items:start}
+.qopts{display:grid;gap:8px}
+.qopts label{display:flex;gap:12px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px 14px;cursor:pointer;min-height:52px}
+.qopts label:has(input:checked){border-color:var(--accent);background:var(--accent-soft)}
+.qopts input{width:20px;height:20px;min-height:0;flex:none}
+.res{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:20px;position:sticky;top:90px}
+.res h3{font-size:1.2rem;margin-bottom:10px}
+.bar{height:10px;border-radius:99px;background:var(--line);overflow:hidden;margin:4px 0 12px}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:99px;transition:width .4s}
+.res .row2{display:flex;justify-content:space-between;font-size:.92rem;gap:8px}
+.diff{display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--surface)}
+.diff>div{padding:14px 18px;border-bottom:1px solid var(--line);font-size:.95rem}
+.diff>div:nth-last-child(-n+2){border-bottom:0}
+.diff .h{font:700 1rem var(--display);background:var(--accent-soft)}
+.diff .h.us{background:var(--accent);color:var(--accent-fg)}
+.diff .us{border-left:1px solid var(--line)}
+.diff .cur{color:var(--muted)}
+.sol{overflow-x:auto}
+.sol table{width:100%;min-width:620px;border-collapse:collapse;background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.sol th{background:var(--accent-soft);text-align:left;padding:12px 16px;font:600 .75rem var(--body);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.sol td{padding:14px 16px;border-top:1px solid var(--line);vertical-align:top;font-size:.94rem}
+.sol td:first-child{font-weight:600;white-space:nowrap}
+details{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:0 18px}
+details+details{margin-top:8px}
+summary{cursor:pointer;font-weight:600;padding:16px 0;min-height:52px;list-style:none;display:flex;justify-content:space-between;gap:12px}
+summary::after{content:"+";color:var(--accent);font-size:1.3rem;line-height:1}
+details[open] summary::after{content:"–"}
+details p{margin:0 0 16px;color:var(--muted)}
+summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.cta-band{background:linear-gradient(120deg,#10263d,#1b6fb5);color:#fff;border-radius:18px;padding:32px;display:flex;gap:20px;justify-content:space-between;align-items:center;flex-wrap:wrap}
+.cta-band h2{color:#fff;max-width:20ch}
+.cta-band .btn{background:#fff;color:#10263d;border-color:#fff}
+@media(max-width:820px){.quiz{grid-template-columns:1fr}.res{position:static}.diff{grid-template-columns:1fr}.diff .us{border-left:0}.diff>div:nth-last-child(-n+2){border-bottom:1px solid var(--line)}.diff>div:last-child{border-bottom:0}.band{padding-block:44px}}
+@media(prefers-reduced-motion:reduce){.rv.in{animation:none}.pc{transition:none}}
+@media(max-width:820px){.mgrid{grid-template-columns:1fr!important}}
+/* ===== v3 : vues et onglets ===== */
+.view{display:none}.view.on{display:block;animation:fade .35s ease both}
+@keyframes fade{from{opacity:.3;transform:translateY(8px)}to{opacity:1;transform:none}}
+.pagehead{padding-block:48px 12px}
+.pagehead h1{font-size:clamp(2rem,5.5vw,3.2rem)}
+.subtabs{display:flex;gap:8px;overflow-x:auto;padding-block:4px 12px;margin-bottom:8px;scrollbar-width:thin}
+.subtabs button{flex:none;font:600 .95rem var(--body);padding:11px 18px;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:99px;cursor:pointer;min-height:46px}
+.subtabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
+.subtabs button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.tp{display:none}.tp.on{display:grid;grid-template-columns:1.2fr .8fr;gap:20px;align-items:start;animation:fade .3s ease both}
+.tp .main,.tp .side{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:24px;min-width:0}
+.tp .side{background:var(--accent-soft)}
+.tp h2{font-size:clamp(1.5rem,3.6vw,2.1rem);margin-bottom:6px}
+.tp h3{font:600 .78rem var(--body);letter-spacing:.08em;text-transform:uppercase;color:var(--accent);margin:18px 0 6px}
+.tp p,.tp li{color:var(--fg);font-size:.97rem}
+.tp ul{margin:0;padding-left:20px;display:grid;gap:4px}
+.tp .lead{margin-top:6px;font-size:1.02rem}
+.tp .side .btn{width:100%;margin-top:14px}
+.spec{width:100%;border-collapse:collapse;font-size:.88rem;margin-top:6px;min-width:0}
+.spec th,.spec td{padding:8px 10px;border-top:1px solid var(--line);text-align:left}
+.spec th{font:600 .72rem var(--body);letter-spacing:.05em;text-transform:uppercase;color:var(--muted)}
+.specw{overflow-x:auto}
+.viz{margin:-8px -8px 12px}.viz svg{width:100%;height:auto;display:block;border-radius:10px}
+.src{font-size:.8rem;color:var(--muted);margin-top:14px}
+.three{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:14px}
+.three .step .t{font-size:1.4rem}
+.pp{display:flex;gap:8px;flex-wrap:wrap}
+.pp a{border:1px solid var(--line);background:var(--surface);border-radius:99px;padding:8px 16px;color:var(--fg);text-decoration:none;font-size:.92rem}
+.pp a:hover{border-color:var(--accent);color:var(--accent)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:20px;align-items:start}
+.two>*{min-width:0}
+.social{display:flex;gap:12px;flex-wrap:wrap;margin-top:10px}
+footer.dark a{color:#fff}
+@media(max-width:860px){.tp.on{grid-template-columns:1fr}.two{grid-template-columns:1fr}.pagehead{padding-block:32px 8px}}
+@media(prefers-reduced-motion:reduce){.view.on,.tp.on{animation:none}}
+</style>
+<div class="bg" aria-hidden="true"></div>
+<div class="wrap">
+<nav class="top" id="nav" aria-label="Navigation principale">
+  <a href="#accueil" class="brand" style="display:block" aria-label="Accueil"><img class="logo" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQ4AAABeCAYAAADSSPrmAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAA4RpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDkuMC1jMDAwIDc5LjE3MWMyN2ZhYiwgMjAyMi8wOC8xNi0yMjozNTo0MSAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtcE1NOk9yaWdpbmFsRG9jdW1lbnRJRD0ieG1wLmRpZDo2MTM5MTZhYS1jMDczLTlhNDItYTU1MS1hMTRkZDJjNjc4OGUiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6MUVCMjE3MEU4Q0Q0MTFFREEwODJGMTlFMzQ1RTIyMUEiIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6MUVCMjE3MEQ4Q0Q0MTFFREEwODJGMTlFMzQ1RTIyMUEiIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIDIyLjMgKFdpbmRvd3MpIj4gPHhtcE1NOkRlcml2ZWRGcm9tIHN0UmVmOmluc3RhbmNlSUQ9InhtcC5paWQ6MmI0NTc4N2EtMTY0NS02ODQ0LTk1MzYtNDM3ZDNmZTNmYzZiIiBzdFJlZjpkb2N1bWVudElEPSJhZG9iZTpkb2NpZDpwaG90b3Nob3A6M2Y4M2I4ZDEtNGIyNS00ODRjLTg1MGQt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" alt="Geo Engineering" width="162" height="56"></a>
+  <button class="burger" id="burger" aria-label="Ouvrir le menu" aria-expanded="false">☰</button>
+  <ul id="menu">
+    <li><a href="#accueil">Accueil</a></li>
+    <li><a href="#pathologies">Pathologies</a></li>
+    <li><a href="#solutions">Solutions</a></li>
+    <li><a href="#autotest">Auto-test</a></li>
+    <li><a href="#a-propos">Qui sommes-nous</a></li>
+    <li><a href="#contact">Contact</a></li>
+  </ul>
+  <a class="btn cta-nav" href="#contact" data-mode="audit">Audit gratuit</a>
+</nav>
+
+<main class="view on" id="v-accueil">
+<header class="hero">
+  <div>
+    <div class="eyebrow">Geo Engineering · Spécialiste de la pathologie du bâtiment</div>
+    <h1 style="margin-top:12px">Avant de payer des travaux, sachez <span class="grad">d'où vient l'humidité.</span></h1>
+    <p class="lead">Un conseiller mesure l'humidité de l'air et des murs, repère les points de condensation et vous remet un rapport chiffré. Vous décidez ensuite, en connaissant la vraie cause.</p>
+    <div class="cta">
+      <a class="btn" href="#contact" data-mode="audit">Recevoir mon audit gratuit</a>
+      <a class="btn ghost" href="#autotest">Faire l'auto-test (1 min)</a>
+    </div>
+    <div class="trust"><span>Diagnostic gratuit</span><span>Rapport écrit</span><span>Sans engagement</span></div>
+  </div>
+  <div>
+    <div class="video" id="videoBox"><div class="ph">Vidéo à renseigner dans CONFIG.videoUrl</div></div>
+    <p class="vcap">Le boîtier expliqué par le fabricant. Le diagnostic détermine si cette solution est adaptée à la cause de votre humidité.</p>
+  </div>
+</header>
+<section style="padding-block:8px 24px" class="rv"><div class="stats">
+  <div><b data-count="40000" data-suffix="+">40 000+</b><span>diagnostics réalisés, selon Geo Engineering</span></div>
+  <div><b data-count="50" data-suffix=" ans">50 ans</b><span>d'expérience en pathologie du bâtiment, selon Geo Engineering</span></div>
+  <div><b>Toute la France</b><span>via un réseau de professionnels certifiés</span></div>
+  <div><b data-count="8">8</b><span>pathologies diagnostiquées, de la condensation au radon</span></div>
+</div></section>
+
+<section class="band">
+  <div class="head"><div class="eyebrow">L'humidité peut être trompeuse</div><h2>Mêmes effets visibles, causes différentes.</h2>
+  <p class="lead" style="font-size:1rem;margin:0">Une tache, de la peinture qui cloque, une odeur : plusieurs causes peuvent se combiner. Si le problème persiste, un diagnostic évite de traiter le mauvais.</p></div>
+  <div class="three">
+    <div class="step rv"><div class="t">01</div><h3>Diagnostic et expertise</h3><p>L'expertise éclaire sur les meilleures solutions réparatrices, pathologie par pathologie.</p></div>
+    <div class="step rv"><div class="t">02</div><h3>Recherche et développement</h3><p>Des travaux pour proposer des solutions efficaces et durables, fabriquées en France.</p></div>
+    <div class="step rv"><div class="t">03</div><h3>Compétences complémentaires</h3><p>Un réseau d'experts dont les connaissances se complètent, appliquées à chaque dossier.</p></div>
+  </div>
+  <div class="chips" aria-label="Bâtiments concernés"><span>Maisons</span><span>Appartements</span><span>Copropriétés</span><span>Immeubles</span><span>Anciens corps de ferme</span><span>Lieux de culte</span><span>Châteaux et patrimoine</span></div>
+</section>
+
+<section class="band">
+  <div class="head"><div class="eyebrow">La méthode</div><h2>Trois temps, une réponse claire.</h2></div>
+  <div class="steps">
+    <div class="step rv"><div class="t">Étape 1 · Échange</div><h3>On écoute votre logement</h3><p>Vous racontez ce que vous voyez : taches, odeurs, buée, factures de chauffage. Dix minutes suffisent pour cadrer la visite.</p></div>
+    <div class="step rv"><div class="t">Étape 2 · Mesure</div><h3>On mesure sur place</h3><p>Hygromètre, humidimètre à pointes, température de surface. Les relevés sont faits pièce par pièce, devant vous.</p></div>
+    <div class="step rv"><div class="t">Étape 3 · Rapport</div><h3>On vous remet un rapport chiffré</h3><p>La cause probable, les pièces concernées, le coût actuel de l'humidité et les solutions possibles, avec leurs limites.</p></div>
+  </div>
+  <div class="two" style="margin-top:20px;align-items:center">
+    <div class="figure"><svg viewBox="0 0 460 380" role="img" aria-label="Coupe d'une maison montrant les points de mesure : humidité de l'air, mur et condensation">
+      <rect x="0" y="0" width="460" height="380" rx="8" fill="var(--accent-soft)"/>
+      <rect x="0" y="290" width="460" height="90" fill="var(--wall)"/>
+      <path d="M0 290 H460" stroke="var(--wall-line)" stroke-width="2"/>
+      <!-- house -->
+      <path d="M60 290 V150 L230 50 L400 150 V290 Z" fill="var(--surface)" stroke="var(--wall-line)" stroke-width="3" stroke-linejoin="round"/>
+      <defs><linearGradient id="rise" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="var(--damp)" stop-opacity=".55"/><stop offset="1" stop-color="var(--damp)" stop-opacity="0"/></linearGradient></defs>
+      <rect x="62" y="205" width="336" height="83" fill="url(#rise)"/>
+      <path d="M62 205 q10 -6 20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0 t20 0" fill="none" stroke="var(--damp)" stroke-width="2" stroke-dasharray="3 4"/>
+      <!-- window -->
+      <rect x="150" y="170" width="80" height="62" rx="3" fill="var(--bg)" stroke="var(--wall-line)" stroke-width="2.5"/>
+      <path d="M190 170 V232 M150 201 H230" stroke="var(--wall-line)" stroke-width="2"/>
+      <circle cx="162" cy="222" r="2.5" fill="var(--damp)"/><circle cx="176" cy="218" r="2" fill="var(--damp)"/><circle cx="205" cy="224" r="2.5" fill="var(--damp)"/>
+      <!-- door -->
+      <rect x="300" y="205" width="52" height="85" rx="3" fill="var(--bg)" stroke="var(--wall-line)" stroke-width="2.5"/>
+      <!-- markers -->
+      <g>
+        <circle cx="100" cy="255" r="7" fill="var(--bad)"/><circle cx="100" cy="255" r="14" fill="none" stroke="var(--bad)" stroke-opacity=".5"/>
+        <path d="M100 241 V120" stroke="var(--muted)" stroke-dasharray="3 3"/>
+        <rect x="12" y="92" width="130" height="38" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+        <text x="22" y="108" class="mut">MUR (pointes)</text><text x="22" y="123" style="font-weight:600">26 % · à traiter</text>
+      </g>
+      <g>
+        <circle cx="205" cy="146" r="7" fill="var(--warn)"/>
+        <path d="M205 139 V110" stroke="var(--muted)" stroke-dasharray="3 3"/>
+        <rect x="160" y="70" width="130" height="38" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+        <text x="170" y="86" class="mut">AIR · HR</text><text x="170" y="101" style="font-weight:600">68 % · haute</text>
+      </g>
+      <g>
+        <circle cx="326" cy="188" r="7" fill="var(--good)"/>
+        <path d="M326 181 V150" stroke="var(--muted)" stroke-dasharray="3 3"/>
+        <rect x="300" y="112" width="148" height="38" rx="6" fill="var(--surface)" stroke="var(--line)"/>
+        <text x="310" y="128" class="mut">POINT DE ROSÉE</text><text x="310" y="143" style="font-weight:600">13,9 °C à 20 °C</text>
+      </g>
+      <text x="14" y="352" class="mut">Exemple illustratif. Vos mesures réelles figurent dans le rapport.</text>
+    </svg></div>
+    <div class="meas" style="grid-template-columns:1fr 1fr;margin:0">
+      <div class="m"><b>40–60 %</b><span>humidité relative visée dans une pièce de vie</span></div>
+      <div class="m"><b>&gt; 70 %</b><span>seuil où les moisissures apparaissent</span></div>
+      <div class="m"><b>Point de rosée</b><span>température sous laquelle un mur condense</span></div>
+      <div class="m"><b>% mur</b><span>taux d'humidité relevé par pointes</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="head"><div class="eyebrow">Notre approche</div><h2>La cause d'abord. La solution ensuite.</h2>
+  <p class="lead" style="font-size:1rem;margin:0">Beaucoup de vendeurs proposent d'abord un produit. Nous commençons par comprendre.</p></div>
+  <div class="diff rv">
+    <div class="h">Souvent sur le marché</div><div class="h us">Chez Geo Engineering</div>
+    <div class="cur">Un produit présenté avant tout diagnostic</div><div class="us">Un diagnostic mesuré avant toute proposition</div>
+    <div class="cur">La même réponse pour tous les murs</div><div class="us">Une réponse adaptée à chaque pathologie</div>
+    <div class="cur">Des promesses générales</div><div class="us">Un rapport écrit avec les relevés et leurs limites</div>
+    <div class="cur">Un devis à signer sur place</div><div class="us">Du temps pour comparer et décider</div>
+    <div class="cur">Un interlocuteur commercial</div><div class="us">Des experts, appuyés par un réseau certifié sur toute la France</div>
+  </div>
+</section>
+<!-- PROFILS -->
+<section class="band" id="profils">
+  <div class="head">
+    <div class="eyebrow">Pour qui</div>
+    <h2>Un audit utile, quelle que soit votre situation.</h2>
+  </div>
+  <div class="tabs" role="tablist" id="tabs"></div>
+  <div id="panel"></div>
+  <div class="cta"><a class="btn" href="#contact" data-mode="audit">Demander mon audit gratuit</a></div>
+</section>
+
+
+
+<section style="padding-block:8px 56px"><div class="cta-band rv"><h2>Découvrez d'où vient votre humidité.</h2><a class="btn" href="#contact" data-mode="audit">Demander mon audit gratuit</a></div></section>
+</main>
+
+<main class="view" id="v-pathologies">
+  <div class="pagehead"><div class="eyebrow">Les pathologies</div><h1>Huit causes d'humidité, huit diagnostics.</h1>
+  <p class="lead">Choisissez la situation qui ressemble à la vôtre. Chaque fiche explique la cause, les signes et ce que nous mesurons.</p></div>
+  <div class="subtabs" role="tablist" data-group="p"><button role="tab" aria-selected="true" data-tp="p-rc">Remontées capillaires</button><button role="tab" aria-selected="false" data-tp="p-inf">Infiltrations</button><button role="tab" aria-selected="false" data-tp="p-con">Condensation</button><button role="tab" aria-selected="false" data-tp="p-moi">Moisissures</button><button role="tab" aria-selected="false" data-tp="p-sal">Salpêtre</button><button role="tab" aria-selected="false" data-tp="p-asc">Humidité ascensionnelle</button><button role="tab" aria-selected="false" data-tp="p-vs">Humidité du vide sanitaire</button><button role="tab" aria-selected="false" data-tp="p-rad">Radon</button></div>
+  <div class="tp on" id="p-rc" role="tabpanel"><div class="main"><h2>Remontées capillaires</h2><p class="lead">L'eau du sol monte dans les murs par capillarité. C'est l'une des causes d'humidité les plus répandues dans le bâti, et l'une des plus souvent confondues avec d'autres.</p><h3>Causes</h3><p>Les matériaux poreux se comportent comme de minuscules conduits : l'eau du sol y monte et s'élève dans la maçonnerie, parfois jusqu'à 1,5 m. Murs de façade, murs de refend, cloisons et sols peuvent être touchés.</p><h3>Signes</h3><ul><li>Traces d'humidité en pied de mur</li><li>Peinture ou papier peint qui cloque</li><li>Taches blanches et dépôts de sels</li><li>Odeur de renfermé</li></ul><h3>Risques</h3><p>Dégradation des enduits et des finitions, développement de moisissures et de salpêtre, inconfort thermique et risques pour la santé des occupants.</p><h3>Ce que nous mesurons</h3><p>Le taux d'humidité du mur à plusieurs hauteurs, comparé à l'humidité de l'air, pour distinguer les remontées capillaires d'une condensation ou d'une infiltration.</p></div><aside class="side"><div class="viz"><svg viewBox="0 0 320 190" role="img" aria-label="Eau du sol qui monte dans un mur"><rect width="320" height="190" rx="10" fill="var(--bg)"/><defs><linearGradient id="g1" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="var(--damp)" stop-opacity=".6"/><stop offset="1" stop-color="var(--damp)" stop-opacity="0"/></linearGradient></defs><rect x="0" y="140" width="320" height="50" fill="var(--wall)"/><path d="M0 140H320" stroke="var(--wall-line)" stroke-width="2"/><path d="M0 165 q20 -8 40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0 t40 0" fill="none" stroke="var(--damp)" stroke-width="3"/><rect x="110" y="30" width="100" height="110" fill="var(--surface)" stroke="var(--wall-line)" stroke-width="2.5"/><rect x="112" y="55" width="96" height="83" fill="url(#g1)"/><path d="M130 160 V120" stroke="var(--damp)" stroke-width="2.5" marker-end="none"/><path d="M125 126 L130 118 L135 126" fill="none" stroke="var(--damp)" stroke-width="2.5"/><path d="M160 160 V120" stroke="var(--damp)" stroke-width="2.5" marker-end="none"/><path d="M155 126 L160 118 L165 126" fill="none" stroke="var(--damp)" stroke-width="2.5"/><path d="M190 160 V120" stroke="var(--damp)" stroke-width="2.5" marker-end="none"/><path d="M185 126 L190 118 L195 126" fill="none" stroke="var(--damp)" stroke-width="2.5"/><path d="M100 55 H220" stroke="var(--bad)" stroke-dasharray="4 4"/><text x="226" y="59" text-anchor="start">≈ 1,5 m max</text><text x="12" y="178" text-anchor="start">Eau du sol</text></svg></div><h3 style="margin-top:0">Les remontées capillaires sont-elles la cause chez vous ?</h3><p>Seule la mesure sur place le confirme. Le rapport compare ensuite les solutions possibles.</p><a class="btn" href="#contact" data-mode="audit">Demander un diagnostic gratuit</a></aside></div><div class="tp" id="p-inf" role="tabpanel"><div class="main"><h2>Infiltrations</h2><p class="lead">L'eau de pluie pénètre par le toit ou les murs. Les dégâts apparaissent d'abord à l'extérieur, puis gagnent l'intérieur : on a le temps d'agir.</p><h3>Causes</h3><ul><li>Murs ou toiture trop poreux</li><li>Fissures</li><li>Gouttières bouchées</li><li>Joints défectueux</li></ul><h3>Risques</h3><p>Non traitée, l'infiltration finit par provoquer des dégradations importantes à l'intérieur du bâtiment.</p><h3>Solutions</h3><p>Réparer les défauts d'étanchéité (fissures, joints, gouttières, toiture) et imperméabiliser les murs.</p><h3>Conseils</h3><p>Surveillez régulièrement l'extérieur des murs. N'isolez pas avant d'avoir imperméabilisé : isoler un mur qui prend l'eau aggrave le problème.</p></div><aside class="side"><div class="viz"><svg viewBox="0 0 320 190" role="img" aria-label="Infiltration d'eau de pluie par la toiture et le mur"><rect width="320" height="190" rx="10" fill="var(--bg)"/><rect x="0" y="140" width="320" height="50" fill="var(--wall)"/><path d="M0 140H320" stroke="var(--wall-line)" stroke-width="2"/><rect x="90" y="70" width="140" height="70" fill="var(--surface)" stroke="var(--wall-line)" stroke-width="2.5"/><path d="M75 70 L160 20 L245 70Z" fill="var(--wall)" stroke="var(--wall-line)" stroke-width="2.5" stroke-linejoin="round"/><path d="M120 8 q-5 8 0 11 q5 -3 0 -11z" fill="var(--damp)"/><path d="M150 0 q-5 8 0 11 q5 -3 0 -11z" fill="var(--damp)"/><path d="M185 10 q-5 8 0 11 q5 -3 0 -11z" fill="var(--damp)"/><path d="M215 2 q-5 8 0 11 q5 -3 0 -11z" fill="var(--damp)"/><path d="M60 40 q-5 8 0 11 q5 -3 0 -11z" fill="var(--damp)"/><path d="M260 35 q-5 8 0 11 q5 -3 0 -11z" fill="var(--damp)"/><path d="M160 36 l-4 12 l6 8 l-4 14" fill="none" stroke="var(--bad)" stroke-width="2.5"/><path d="M162 78 q4 20 -2 40" fill="none" stroke="var(--damp)" stroke-width="3" stroke-dasharray="3 4"/><ellipse cx="160" cy="124" rx="22" ry="10" fill="var(--damp)" opacity=".35"/><text x="240" y="90" text-anchor="start">fissure</text></svg></div><h3 style="margin-top:0">Une tache qui revient après la pluie ?</h3><p>C'est un indice classique d'infiltration. Le diagnostic en localise la source.</p><a class="btn" href="#contact" data-mode="audit">Demander un diagnostic gratuit</a></aside></div><div class="tp" id="p-con" role="tabpanel"><div class="main"><h2>Condensation</h2><p class="lead">C'est la première cause d'humidité dans les maisons. L'air intérieur chargé de vapeur d'eau rencontre une surface froide et se transforme en eau.</p><h3>Causes</h3><ul><li>Ventilation insuffisante</li><li>Isolation insuffisante</li><li>Écart de température entre l'extérieur et l'intérieur, surtout en automne et en hiver</li><li>Vapeur produite par la respiration, la cuisine, les douches et le linge</li></ul><h3>Pièces les plus touchées</h3><p>La cuisine et la salle de bain.</p><h3>Ce que nous mesurons</h3><p>L'humidité relative, la température de surface des murs et le point de rosée : sous cette température, la condensation apparaît.</p><h3>Conseils</h3><p>Soignez la ventilation et l'isolation, causes les plus fréquentes. Ne minimisez pas le phénomène : ses conséquences sanitaires et économiques peuvent être graves.</p></div><aside class="side"><div class="viz"><svg viewBox="0 0 320 190" role="img" aria-label="Condensation : air humide et paroi froide"><rect width="320" height="190" rx="10" fill="var(--bg)"/><rect x="60" y="25" width="200" height="115" fill="var(--surface)" stroke="var(--wall-line)" stroke-width="2.5"/><rect x="120" y="50" width="80" height="60" fill="var(--accent-soft)" stroke="var(--wall-line)" stroke-width="2.5"/><path d="M130 95 q-5 8 0 11 q5 -3 0 -11z" fill="var(--damp)"/><path d="M150 102 q-5 8 0 11 q5 -3 0 -11z" fill="var(--damp)"/><path d="M172 98 q-5 8 0 11 q5 -3 0 -11z" fill="var(--damp)"/><path d="M190 104 q-5 8 0 11 q5 -3 0 -11z" fill="var(--damp)"/><path d="M140 70 q-5 8 0 11 q5 -3 0 -11z" fill="var(--damp)"/><path d="M185 72 q-5 8 0 11 q5 -3 0 -11z" fill="var(--damp)"/><path d="M80 130 q8 -12 0 -24 q-8 -12 0 -24" fill="none" stroke="var(--warn)" stroke-width="2.5"/><path d="M100 130 q8 -12 0 -24 q-8 -12 0 -24" fill="none" stroke="var(--warn)" stroke-width="2.5"/><path d="M232 60 L212 60" stroke="var(--accent)" stroke-width="3"/><text x="66" y="18" text-anchor="start">air chaud et humide</text><text x="205" y="128" text-anchor="start">paroi froide</text><rect x="0" y="150" width="320" height="50" fill="var(--wall)"/><path d="M0 150H320" stroke="var(--wall-line)" stroke-width="2"/></svg></div><h3 style="margin-top:0">Buée, coins noircis ?</h3><p>La condensation se corrige souvent sans gros travaux. Le diagnostic le dit.</p><a class="btn" href="#contact" data-mode="audit">Demander un diagnostic gratuit</a></aside></div><div class="tp" id="p-moi" role="tabpanel"><div class="main"><h2>Moisissures</h2><p class="lead">Agglomération de champignons microscopiques : taches ou auréoles vertes, bleues, noires ou blanches, avec une odeur forte et désagréable.</p><h3>Ce qu'elles signalent</h3><p>Elles indiquent une présence d'humidité dans le bâtiment. Il faut les distinguer du salpêtre : ce sont deux phénomènes distincts, même s'ils apparaissent souvent ensemble.</p><h3>Risques pour la santé</h3><p>Maladies respiratoires, affections cutanées et autres problèmes de santé.</p><h3>Ce que nous faisons</h3><p>Nettoyer ne suffit pas. Le diagnostic cherche la source d'humidité qui alimente les moisissures : condensation, infiltration ou remontées capillaires.</p></div><aside class="side"><div class="viz"><svg viewBox="0 0 320 190" role="img" aria-label="Moisissures dans l'angle d'un mur"><rect width="320" height="190" rx="10" fill="var(--bg)"/><rect x="40" y="20" width="240" height="130" fill="var(--surface)" stroke="var(--wall-line)" stroke-width="2.5"/><path d="M160 20 V150" stroke="var(--wall-line)" stroke-width="2"/><circle cx="150" cy="40" r="7" fill="var(--fg)" opacity="0.6"/><circle cx="142" cy="52" r="5" fill="var(--fg)" opacity="0.5"/><circle cx="156" cy="58" r="9" fill="var(--fg)" opacity="0.55"/><circle cx="147" cy="72" r="4" fill="var(--fg)" opacity="0.45"/><circle cx="134" cy="44" r="4" fill="var(--fg)" opacity="0.4"/><circle cx="168" cy="48" r="5" fill="var(--fg)" opacity="0.4"/><circle cx="172" cy="66" r="6" fill="var(--fg)" opacity="0.5"/><circle cx="162" cy="34" r="3" fill="var(--fg)" opacity="0.35"/><circle cx="120" cy="60" r="3" fill="var(--fg)" opacity="0.3"/><text x="180" y="100" text-anchor="start">angle humide</text><text x="48" y="168" text-anchor="start">Un signal d'humidité, pas la cause</text></svg></div><h3 style="margin-top:0">Moisissures dans votre logement ?</h3><p>Les traiter sans traiter la cause, c'est les voir revenir.</p><a class="btn" href="#contact" data-mode="audit">Demander un diagnostic gratuit</a></aside></div><div class="tp" id="p-sal" role="tabpanel"><div class="main"><h2>Salpêtre</h2><p class="lead">Sel minéral composé en grande partie de nitrate de potassium, aussi appelé « sel de pierre ». Il touche tous les matériaux, surtout les bâtiments anciens, mais aussi des constructions récentes.</p><h3>Cause</h3><p>Un excès d'humidité dans le bâtiment. Cave, cuisine et salle de bains sont les pièces les plus exposées.</p><h3>Signes</h3><ul><li>Cristaux blanchâtres en poudre</li><li>Grosses taches humides sur les murs tapissés</li><li>Peinture ou papier peint abîmés</li><li>Murs déformés, bois et meubles qui pourrissent</li></ul><h3>Risques</h3><p>Problèmes allergiques et respiratoires, et dégâts importants sur le bâti.</p><h3>Conseils</h3><p>Agissez tôt, surveillez les pièces humides et faites appel à un spécialiste. Le plus efficace est de comprendre la cause pour choisir la solution adaptée.</p></div><aside class="side"><div class="viz"><svg viewBox="0 0 320 190" role="img" aria-label="Salpêtre : dépôts blancs en pied de mur"><rect width="320" height="190" rx="10" fill="var(--bg)"/><rect x="0" y="140" width="320" height="50" fill="var(--wall)"/><path d="M0 140H320" stroke="var(--wall-line)" stroke-width="2"/><rect x="80" y="30" width="160" height="110" fill="var(--surface)" stroke="var(--wall-line)" stroke-width="2.5"/><path d="M110 132 l3 -6 l3 6 l-3 4z" fill="var(--fg)" opacity=".75"/><path d="M125 126 l3 -6 l3 6 l-3 4z" fill="var(--fg)" opacity=".75"/><path d="M140 134 l3 -6 l3 6 l-3 4z" fill="var(--fg)" opacity=".75"/><path d="M158 128 l3 -6 l3 6 l-3 4z" fill="var(--fg)" opacity=".75"/><path d="M176 134 l3 -6 l3 6 l-3 4z" fill="var(--fg)" opacity=".75"/><path d="M192 124 l3 -6 l3 6 l-3 4z" fill="var(--fg)" opacity=".75"/><path d="M208 132 l3 -6 l3 6 l-3 4z" fill="var(--fg)" opacity=".75"/><path d="M118 112 l3 -6 l3 6 l-3 4z" fill="var(--fg)" opacity=".75"/><path d="M150 114 l3 -6 l3 6 l-3 4z" fill="var(--fg)" opacity=".75"/><path d="M184 110 l3 -6 l3 6 l-3 4z" fill="var(--fg)" opacity=".75"/><path d="M130 96 l3 -6 l3 6 l-3 4z" fill="var(--fg)" opacity=".75"/><path d="M168 98 l3 -6 l3 6 l-3 4z" fill="var(--fg)" opacity=".75"/><path d="M80 100 H240" stroke="var(--bad)" stroke-dasharray="4 4"/><text x="232" y="94" text-anchor="end">zone touchée</text><text x="12" y="178" text-anchor="start">Cristaux de sels</text></svg></div><h3 style="margin-top:0">Poudre blanche sur vos murs ?</h3><p>C'est le signe d'une humidité présente depuis un moment. Le diagnostic remonte à la source.</p><a class="btn" href="#contact" data-mode="audit">Demander un diagnostic gratuit</a></aside></div><div class="tp" id="p-asc" role="tabpanel"><div class="main"><h2>Humidité ascensionnelle</h2><p class="lead">L'eau et l'humidité de la zone sur laquelle repose le bâtiment montent peu à peu dans les murs, jusqu'à environ un mètre et demi.</p><h3>Causes</h3><p>La porosité et la perméabilité des murs, qui permettent l'absorption d'eau, et la capillarité des matériaux : l'eau monte dans les pores comme dans des conduits de petit diamètre.</p><h3>Signes</h3><p>L'eau absorbée transporte des sels hygroscopiques. En s'évaporant, ils laissent des taches blanches caractéristiques sur les murs.</p><h3>Risques</h3><p>Problèmes de santé et de durabilité des éléments de construction. Le phénomène est d'une certaine complexité : il demande un diagnostic sérieux.</p></div><aside class="side"><div class="viz"><svg viewBox="0 0 320 190" role="img" aria-label="Hauteur de l'humidité dans un mur"><rect width="320" height="190" rx="10" fill="var(--bg)"/><defs><linearGradient id="g2" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="var(--damp)" stop-opacity=".6"/><stop offset="1" stop-color="var(--damp)" stop-opacity="0"/></linearGradient></defs><rect x="0" y="140" width="320" height="50" fill="var(--wall)"/><path d="M0 140H320" stroke="var(--wall-line)" stroke-width="2"/><rect x="110" y="25" width="120" height="115" fill="var(--surface)" stroke="var(--wall-line)" stroke-width="2.5"/><rect x="112" y="50" width="116" height="88" fill="url(#g2)"/><path d="M96 140 H110" stroke="var(--fg)" stroke-width="2"/><text x="90" y="144" text-anchor="end">0</text><path d="M96 112 H110" stroke="var(--fg)" stroke-width="2"/><text x="90" y="116" text-anchor="end">0,5 m</text><path d="M96 84 H110" stroke="var(--fg)" stroke-width="2"/><text x="90" y="88" text-anchor="end">1 m</text><path d="M96 56 H110" stroke="var(--fg)" stroke-width="2"/><text x="90" y="60" text-anchor="end">1,5 m</text><path d="M110 56 H230" stroke="var(--bad)" stroke-dasharray="4 4"/><text x="238" y="60" text-anchor="start">limite</text><text x="238" y="74" text-anchor="start">observée</text></svg></div><h3 style="margin-top:0">Un phénomène complexe</h3><p>Plusieurs causes peuvent se combiner. Seul un relevé complet les démêle.</p><a class="btn" href="#contact" data-mode="audit">Demander un diagnostic gratuit</a></aside></div><div class="tp" id="p-vs" role="tabpanel"><div class="main"><h2>Humidité du vide sanitaire</h2><p class="lead">Le vide sanitaire est l'espace sous le plancher. Quand il est humide, l'humidité gagne le reste de la construction.</p><h3>Causes</h3><ul><li>Évaporation du sol en terre exposée</li><li>Eau souterraine qui suinte</li><li>Infiltrations venant de l'extérieur</li><li>Radon remontant du sous-sol, qui s'accumule si l'aération est mauvaise</li></ul><h3>Risques</h3><p>Humidité qui gagne les pièces de vie, accumulation de radon, et pathologies associées : salpêtre, moisissures, remontées capillaires.</p><h3>Conseils</h3><p>La ventilation du vide sanitaire est obligatoire. Aérez suffisamment pour évacuer le radon, et traitez l'origine de l'humidité plutôt que ses seules conséquences.</p></div><aside class="side"><div class="viz"><svg viewBox="0 0 320 190" role="img" aria-label="Vide sanitaire humide sous la maison"><rect width="320" height="190" rx="10" fill="var(--bg)"/><rect x="0" y="130" width="320" height="60" fill="var(--wall)"/><rect x="70" y="20" width="180" height="80" fill="var(--surface)" stroke="var(--wall-line)" stroke-width="2.5"/><rect x="70" y="100" width="180" height="30" fill="var(--accent-soft)" stroke="var(--wall-line)" stroke-width="2.5"/><path d="M100 128 q6 -8 0 -16 q-6 -8 0 -16" fill="none" stroke="var(--damp)" stroke-width="2.5"/><path d="M140 128 q6 -8 0 -16 q-6 -8 0 -16" fill="none" stroke="var(--damp)" stroke-width="2.5"/><path d="M180 128 q6 -8 0 -16 q-6 -8 0 -16" fill="none" stroke="var(--damp)" stroke-width="2.5"/><path d="M220 128 q6 -8 0 -16 q-6 -8 0 -16" fill="none" stroke="var(--damp)" stroke-width="2.5"/><rect x="58" y="108" width="12" height="14" fill="var(--fg)" opacity=".5"/><rect x="250" y="108" width="12" height="14" fill="var(--fg)" opacity=".5"/><text x="8" y="176" text-anchor="start">Sol en terre : évaporation</text><text x="160" y="92" text-anchor="middle">pièces de vie</text><text x="160" y="118" text-anchor="middle">vide sanitaire</text></svg></div><h3 style="margin-top:0">Parquet qui gonfle, odeur de cave ?</h3><p>Le vide sanitaire est un suspect fréquent. Nous le contrôlons pendant la visite.</p><a class="btn" href="#contact" data-mode="audit">Demander un diagnostic gratuit</a></aside></div><div class="tp" id="p-rad" role="tabpanel"><div class="main"><h2>Radon</h2><p class="lead">Gaz radioactif naturel issu de la désintégration de l'uranium et du radium présents dans le sol. Sans odeur ni couleur, il s'inhale sans qu'on s'en aperçoive.</p><h3>Comment il entre</h3><p>D'abord dans les pièces enterrées (cave, sous-sol), puis il remonte dans le logement par les fissures, les remontées d'humidité et le passage des canalisations. Le sol et les matériaux jouent un rôle important.</p><h3>Risques pour la santé</h3><p>Une fois inhalé, il irradie les voies respiratoires. C'est la deuxième cause de cancer du poumon après le tabac. Le risque dépend de la concentration et de la durée d'exposition.</p><h3>Mesure</h3><p>Elle se fait avec des dosimètres radon posés plusieurs semaines. Ce n'est pas une mesure d'humidité : elle est spécifique.</p><h3>Solutions</h3><ul><li>Renouveler l'air, avec une ventilation par surpression</li><li>Rendre le sol étanche : fissures et passages de canalisations</li><li>Mettre en dépression les parties basses</li></ul></div><aside class="side"><div class="viz"><svg viewBox="0 0 320 190" role="img" aria-label="Radon qui remonte du sol dans le logement"><rect width="320" height="190" rx="10" fill="var(--bg)"/><rect x="0" y="120" width="320" height="70" fill="var(--wall)"/><rect x="80" y="20" width="160" height="60" fill="var(--surface)" stroke="var(--wall-line)" stroke-width="2.5"/><rect x="80" y="80" width="160" height="40" fill="var(--accent-soft)" stroke="var(--wall-line)" stroke-width="2.5"/><path d="M158 120 l-3 -10 l5 -8" stroke="var(--bad)" stroke-width="2" fill="none"/><circle cx="158" cy="150" r="4" fill="var(--warn)" opacity="0.9"/><circle cx="150" cy="138" r="4" fill="var(--warn)" opacity="0.8"/><circle cx="166" cy="134" r="4" fill="var(--warn)" opacity="0.8"/><circle cx="156" cy="124" r="4" fill="var(--warn)" opacity="0.9"/><circle cx="160" cy="106" r="4" fill="var(--warn)" opacity="0.8"/><circle cx="152" cy="92" r="4" fill="var(--warn)" opacity="0.7"/><circle cx="165" cy="56" r="4" fill="var(--warn)" opacity="0.5"/><circle cx="158" cy="40" r="4" fill="var(--warn)" opacity="0.35"/><rect x="196" y="96" width="26" height="16" rx="3" fill="var(--surface)" stroke="var(--accent)" stroke-width="2"/><text x="200" y="138" text-anchor="start">dosimètre</text><text x="12" y="176" text-anchor="start">Gaz issu du sol</text><text x="250" y="60" text-anchor="start">logement</text></svg></div><h3 style="margin-top:0">Faire mesurer le radon</h3><p>Si votre logement est concerné, une mesure par dosimètres donne la réponse.</p><a class="btn" href="#contact" data-mode="audit">Demander un diagnostic gratuit</a></aside></div>
+  <section style="padding-block:40px 56px"><div class="cta-band rv"><h2>Pas sûr de votre cas ?</h2><a class="btn" href="#autotest">Faire l'auto-test</a></div></section>
+</main>
+
+<main class="view" id="v-solutions">
+  <div class="pagehead"><div class="eyebrow">Les solutions</div><h1>Une réponse pour chaque cause.</h1>
+  <p class="lead">Le rapport indique la cause, puis le type de réponse qui lui correspond. Il peut aussi conclure qu'aucune intervention lourde n'est utile.</p></div>
+  <div class="sol rv" style="margin-bottom:24px"><table>
+    <thead><tr><th>Cause constatée</th><th>Type de réponse envisagé</th></tr></thead>
+    <tbody>
+      <tr><td>Condensation</td><td>Ventilation (VD GEO, VP-GEO), régulation de l'humidité, isolation et habitudes d'aération.</td></tr>
+      <tr><td>Infiltrations</td><td>Réparation à la source : toiture, façade, joints, canalisations ; membranes pour les parois enterrées.</td></tr>
+      <tr><td>Remontées capillaires</td><td>Traitement choisi selon le bâtiment après diagnostic (S-GEO) : le rapport compare les options, leurs coûts et leurs limites.</td></tr>
+      <tr><td>Salpêtre</td><td>Traitement de la cause d'humidité, puis neutralisation des sels (S-CN160).</td></tr>
+      <tr><td>Vide sanitaire et radon</td><td>Ventilation du vide, étanchéité, ventilation par surpression (VP-GEO), après mesure spécifique.</td></tr>
+    </tbody></table></div>
+  <div class="subtabs" role="tablist" data-group="s"><button role="tab" aria-selected="true" data-tp="s-sg">S-GEO</button><button role="tab" aria-selected="false" data-tp="s-vd">VD GEO</button><button role="tab" aria-selected="false" data-tp="s-cn">S-CN160</button><button role="tab" aria-selected="false" data-tp="s-mb">Membranes</button><button role="tab" aria-selected="false" data-tp="s-vp">VP-GEO</button></div>
+  <div class="tp on" id="s-sg" role="tabpanel"><div class="main"><h2>S-GEO <span style="font:500 1rem var(--body);color:var(--muted)">· Boîtier géomagnétique</span></h2><p class="lead">Dispositif proposé contre les remontées capillaires, posé par des techniciens agréés. Informations issues du fabricant.</p><h3>Pose et fabrication</h3><ul><li>Fixation au sol ou au mur, plaque de pose intégrée</li><li>Pose exclusivement par des techniciens agréés</li><li>Fabriqué en France, sous contrôle qualité, chaque pose est répertoriée</li><li>Modèles S-GEO 10 et 15 : 348 × 321 × 66 mm · S-GEO 20, 25 et 30 : 448 × 421 × 66 mm</li></ul><h3>Délais d'assèchement annoncés par le fabricant</h3><div class="specw"><table class="spec"><tr><th>Épaisseur du mur</th><th>Durée estimée</th></tr><tr><td>0,2 à 0,6 m</td><td>10 à 18 mois</td></tr><tr><td>0,7 à 1 m</td><td>18 à 24 mois</td></tr><tr><td>Parties enterrées</td><td>Durée pouvant être doublée</td></tr></table></div><h3>Après l'assèchement</h3><ul><li>Piquetage des enduits contaminés</li><li>Neutralisation des sels (S-CN160 ou équivalent)</li><li>Enduit d'assainissement</li><li>Ventilation maintenue</li></ul><h3>Engagement et suivi</h3><p>Contrat d'obligation de résultat et suivi par un technicien pendant l'assèchement. Pendant le traitement, des traces de poudre blanche (sels) peuvent apparaître sur les murs.</p><h3>Quand l'envisager</h3><p>Seulement si le diagnostic identifie des remontées capillaires. Le rapport détaille les options, les coûts et les limites avant toute décision.</p></div><aside class="side"><h3 style="margin-top:0">Fiche S-GEO</h3><p>Prix donné après diagnostic gratuit, selon le bâtiment.</p><a class="btn" href="#contact" data-mode="audit">Demander un diagnostic gratuit</a></aside></div><div class="tp" id="s-vd" role="tabpanel"><div class="main"><h2>VD GEO <span style="font:500 1rem var(--body);color:var(--muted)">· Ventilation décentralisée à récupération de chaleur</span></h2><p class="lead">Unité de ventilation mécanique pour le renouvellement de l'air, utile en rénovation quand on ne peut pas installer de conduits.</p><h3>Principe</h3><p>Flux alternés : environ 70 secondes d'extraction, la chaleur est stockée dans un échangeur céramique, puis le flux s'inverse et réchauffe l'air entrant. Conduits de 100 ou 160 mm, débit maximal 60 m³/h.</p><h3>Caractéristiques</h3><ul><li>Récupération de chaleur annoncée : 93 %</li><li>Puissance : 3,9 W au minimum</li><li>Plage de fonctionnement : −30 °C à +50 °C, protection IPX4</li><li>Pas de drainage des condensats</li><li>Double filtre lavable, entretien sans démontage</li></ul><h3>Performances (conduit 100 / 160 mm)</h3><div class="specw"><table class="spec"><tr><th>Vitesse</th><th>Débit m³/h</th><th>Puissance W</th><th>Bruit dB(A)</th></tr><tr><td>Nocturne</td><td>5 / 10</td><td>4,0 / 3,9</td><td>13 / 4</td></tr><tr><td>1</td><td>10 / 20</td><td>4,7 / 4,2</td><td>18 / 9</td></tr><tr><td>2</td><td>20 / 40</td><td>5,6 / 5,5</td><td>28 / 21</td></tr><tr><td>3</td><td>30 / 60</td><td>6,9 / 6,7</td><td>37 / 30</td></tr></table></div><h3>Trois versions</h3><ul><li>BASE : interrupteur, 2 vitesses</li><li>ACTIVE : capteurs d'humidité et de luminosité, 3 vitesses, jusqu'à 16 unités communicantes</li><li>WIRELESS : mêmes fonctions qu'ACTIVE, liaison sans fil</li></ul></div><aside class="side"><h3 style="margin-top:0">Contre la condensation</h3><p>Une bonne ventilation traite la première cause d'humidité dans les maisons.</p><a class="btn" href="#contact" data-mode="audit">Demander un diagnostic gratuit</a></aside></div><div class="tp" id="s-cn" role="tabpanel"><div class="main"><h2>S-CN160 <span style="font:500 1rem var(--body);color:var(--muted)">· Neutralisant de sels</span></h2><p class="lead">Convertisseur de sels hygroscopiques (nitrates, nitrites, sulfates, chlorures) pour les murs contaminés par le salpêtre.</p><h3>Fonctionnement</h3><p>Le produit pénètre dans le support et forme des composés très peu solubles. Les sels ne migrent plus vers la surface et n'absorbent plus l'humidité de l'air. Le mur reste perméable à la vapeur d'eau.</p><h3>Caractéristiques</h3><ul><li>Liquide prêt à l'emploi, incolore, sans solvant, ininflammable</li><li>Conditionnement 5, 10 ou 20 L</li><li>Ne modifie pas la teinte du support</li><li>Température minimale d'application : +5 °C</li></ul><h3>Mise en œuvre</h3><ul><li>Support sec, décapé, brossé, dépoussiéré, dégraissé</li><li>Pulvérisation en plusieurs couches espacées d'environ 24 h, 1 à 1,5 L/m²</li><li>Injection pour les fortes concentrations : trous de 12 à 14 mm tous les 15 à 30 cm, 1,5 à 2,5 L/m²</li></ul><h3>Ordre des opérations</h3><p>À appliquer après le traitement de la cause d'humidité, une fois le mur asséché, et avant toute imperméabilisation hydraulique.</p></div><aside class="side"><h3 style="margin-top:0">Contre le salpêtre</h3><p>Il traite les sels, pas la source d'eau : le diagnostic détermine l'ordre des interventions.</p><a class="btn" href="#contact" data-mode="audit">Demander un diagnostic gratuit</a></aside></div><div class="tp" id="s-mb" role="tabpanel"><div class="main"><h2>Membranes <span style="font:500 1rem var(--body);color:var(--muted)">· Géocomposite ALVEODRAIN P5</span></h2><p class="lead">Imperméabilisation, drainage vertical et protection mécanique des parois enterrées : sous-sols, parkings, locaux industriels.</p><h3>Composition</h3><ul><li>Film imperméable</li><li>Nappe drainante alvéolaire en polypropylène non tissé</li><li>Filtre en polypropylène thermolié</li><li>Adhésif de fixation entre lés</li></ul><h3>Avantages</h3><p>Trois fonctions réunies : plus besoin d'un noir d'imperméabilisation ni d'un drain en matériaux granulaires.</p><h3>Format et pose</h3><p>Rouleaux de 1,10 m × 50 m. Pose en lés horizontaux ou verticaux, film côté paroi et filtre côté remblai, recouvrements de 10 cm, fixations en tête tous les 50 cm.</p><h3>Cahier des charges</h3><p>Le produit bénéficie d'un Cahier des Charges SOCOTEC.</p></div><aside class="side"><h3 style="margin-top:0">Contre les infiltrations</h3><p>Pour les parois enterrées, la membrane traite l'eau à la source.</p><a class="btn" href="#contact" data-mode="audit">Demander un diagnostic gratuit</a></aside></div><div class="tp" id="s-vp" role="tabpanel"><div class="main"><h2>VP-GEO <span style="font:500 1rem var(--body);color:var(--muted)">· Ventilation par surpression et purification de l'air</span></h2><p class="lead">Système qui insuffle de l'air filtré et préchauffé dans le logement pour assainir l'air intérieur.</p><h3>Fonctionnement</h3><ul><li>Air capté par un chapeau de ventilation, généralement sur le toit</li><li>Pré-filtration G4 puis filtre F7 (qualité hospitalière)</li><li>Air préchauffé et diffusé dans toutes les pièces</li><li>Surpression du logement</li></ul><h3>Caractéristiques</h3><ul><li>Capacité de traitement jusqu'à 500 m³</li><li>Chauffage d'air progressif, élimination des odeurs</li><li>Écran de supervision et plusieurs sondes</li><li>Réglage automatique ou manuel, mode d'uniformisation de la température</li><li>Plus de 90 % des matériaux recyclables</li></ul><h3>Bénéfices annoncés par le fabricant</h3><p>Réduction des problèmes de condensation, air plus sain (poussières, pollens, particules fines), confort thermique et économies d'énergie. La surpression est aussi présentée comme limitant l'entrée du radon : une mesure par dosimètres reste nécessaire pour le vérifier.</p></div><aside class="side"><h3 style="margin-top:0">Pour l'air intérieur</h3><p>Une solution à envisager en cas de condensation ou de présence de radon.</p><a class="btn" href="#contact" data-mode="audit">Demander un diagnostic gratuit</a></aside></div>
+  <p class="src">Informations techniques reprises des fiches produits de Geo Engineering. Les performances et les délais sont ceux annoncés par le fabricant et dépendent du bâtiment.</p>
+  <section style="padding-block:40px 56px"><div class="cta-band rv"><h2>Quelle solution pour votre logement ?</h2><a class="btn" href="#contact" data-mode="audit">Demander un diagnostic gratuit</a></div></section>
+</main>
+
+<main class="view" id="v-autotest">
+  <div class="pagehead"><div class="eyebrow">Auto-test</div><h1>Que voyez-vous chez vous ?</h1>
+  <p class="lead">Cochez ce qui correspond. Vous obtenez des pistes à vérifier, pas un diagnostic : seule la mesure sur place confirme.</p></div>
+  <section style="padding-block:8px 56px"><div class="quiz"><div class="qopts" id="qopts"></div><div class="res" aria-live="polite" id="qres"></div></div></section>
+</main>
+
+<main class="view" id="v-a-propos">
+  <div class="pagehead"><div class="eyebrow">Qui sommes-nous</div><h1>Une entreprise d'ingénierie dédiée à l'humidité.</h1>
+  <p class="lead">Geo Engineering est née de l'union de trois spécialistes passionnés par les pathologies du bâtiment. Le siège est à Caudan, dans le Morbihan, et le réseau intervient dans toute la France.</p></div>
+  <section class="band" style="padding-block:24px">
+    <div class="stats rv">
+      <div><b>50+ ans</b><span>d'expérience cumulée, selon Geo Engineering</span></div>
+      <div><b>40 000+</b><span>diagnostics réalisés, selon Geo Engineering</span></div>
+      <div><b>France</b><span>réseau de professionnels certifiés</span></div>
+    </div>
+  </section>
+  <section class="band" style="padding-block:24px">
+    <div class="two">
+      <div class="card rv"><h3 style="font-size:1.3rem;margin-bottom:8px">Des experts du bâtiment</h3><p style="margin:0;color:var(--muted)">L'équipe est formée aux techniques de construction, aux normes et aux règles du secteur. Elle sait vérifier si les DTU (Documents Techniques Unifiés) ont été respectés sur un ouvrage et repérer les malfaçons.</p></div>
+      <div class="card rv"><h3 style="font-size:1.3rem;margin-bottom:8px">Une solution selon la cause</h3><p style="margin:0;color:var(--muted)">Le réseau mobilise l'ensemble des technologies disponibles selon la cause identifiée, avec pour objectif un traitement durable plutôt qu'un simple masquage des symptômes.</p></div>
+    </div>
+  </section>
+  <section class="band" style="padding-block:24px">
+    <div class="head"><div class="eyebrow">Nos engagements de diagnostic</div><h2>Ce que vous pouvez attendre.</h2></div>
+    <div class="three">
+      <div class="step rv"><h3>Gratuit, même sans suite</h3><p>Le diagnostic est gratuit et sans engagement. Vous recevez le rapport même si vous ne donnez pas suite.</p></div>
+      <div class="step rv"><h3>Mesuré et écrit</h3><p>Relevés pièce par pièce, cause probable et limites, remis par écrit.</p></div>
+      <div class="step rv"><h3>Du temps pour décider</h3><p>Pas de devis à signer sur place : vous comparez à votre rythme.</p></div>
+    </div>
+  </section>
+  <section class="band" style="padding-block:24px">
+    <div class="head"><div class="eyebrow">Réseau et partenaires</div><h2>Un écosystème d'experts.</h2></div>
+    <div class="pp"><a href="https://tmcgroup.ch/" target="_blank" rel="noopener">TMC</a><a href="https://www.ligavan.com" target="_blank" rel="noopener">Ligavan</a><a href="https://www.franceconseilhumidite.com" target="_blank" rel="noopener">France Conseil Humidité</a><a href="https://casapeixoto.pt" target="_blank" rel="noopener">Casa Peixoto</a><a href="https://www.corse-geotek.fr/" target="_blank" rel="noopener">Corse Geotek</a><a href="https://www.ericsavignacconseil.com" target="_blank" rel="noopener">ES Conseil</a><a href="http://www.youlead.fr/" target="_blank" rel="noopener">Youlead</a><a>AR Development</a></div>
+  </section>
+  <section class="band" style="padding-block:24px 56px">
+    <div class="cta-band rv"><div><h2>Rejoindre le réseau</h2><p style="margin:8px 0 0;opacity:.9">Vous êtes professionnel du bâtiment et le traitement de l'humidité est déjà l'une de vos spécialités, ou vous voulez vous y lancer ?</p></div><a class="btn" href="https://www.geo-engineering-solutions.com/devenir-concessionnaire" target="_blank" rel="noopener">Devenir concessionnaire</a></div>
+  </section>
+</main>
+<main class="view" id="v-contact">
+<div class="pagehead" style="padding-bottom:0"><div class="eyebrow">Contact</div></div><!-- CONTACT -->
+<section class="band" id="contact">
+  <div class="formwrap">
+    <div>
+      <div class="eyebrow">Passez à l'action</div>
+      <h2 style="margin-top:8px">Deux façons de commencer.</h2>
+      <p class="lead" style="font-size:1rem">Laissez vos coordonnées. Un conseiller vous rappelle pour fixer la visite, ou vous répond directement si vous préférez parler.</p>
+      <ul style="padding-left:18px;color:var(--muted);line-height:1.8">
+        <li>Réponse sous un jour ouvré</li>
+        <li>Visite d'environ une heure</li>
+        <li>Aucun paiement demandé</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="mode">
+        <button type="button" id="mAudit" aria-pressed="true">Audit rapide gratuit<small>Je reçois une visite et un rapport</small></button>
+        <button type="button" id="mCall" aria-pressed="false">Parler à un conseiller<small>Je souhaite être rappelé(e)</small></button>
+      </div>
+      <form id="lead" novalidate>
+        <div class="f">
+          <div><label class="l" for="name">Nom et prénom</label><input id="name" autocomplete="name" required></div>
+          <div><label class="l" for="phone">Téléphone</label><input id="phone" type="tel" autocomplete="tel" required></div>
+          <div><label class="l" for="email">E-mail</label><input id="email" type="email" autocomplete="email"></div>
+          <div><label class="l" for="zip">Code postal</label><input id="zip" inputmode="numeric" autocomplete="postal-code" maxlength="5" required></div>
+          <div class="full"><label class="l" for="profile">Vous êtes</label>
+            <select id="profile"><option value="proprietaire">Propriétaire occupant</option><option value="investisseur">Propriétaire bailleur / investisseur</option><option value="locataire">Locataire</option></select></div>
+          <div class="full"><span class="l">Ce que vous constatez</span>
+            <div class="chk" id="symptoms">
+              <label><input type="checkbox" value="Taches ou moisissures"> Taches, moisissures</label>
+              <label><input type="checkbox" value="Peinture qui cloque"> Peinture qui cloque</label>
+              <label><input type="checkbox" value="Buée, condensation"> Buée, condensation</label>
+              <label><input type="checkbox" value="Odeur de renfermé"> Odeur de renfermé</label>
+              <label><input type="checkbox" value="Froid humide"> Froid humide</label>
+            </div></div>
+          <div class="full" id="slotRow" hidden><label class="l" for="slot">Meilleur moment pour vous rappeler</label>
+            <select id="slot"><option>Matin</option><option>Midi</option><option>Après-midi</option><option>Fin de journée</option></select></div>
+          <div class="full"><label class="l" for="note">Un mot sur votre situation (facultatif)</label><textarea id="note"></textarea></div>
+          <div class="full consent"><input id="ok" type="checkbox" required><label for="ok">J'accepte d'être contacté(e) au sujet de ma demande. Mes données ne servent qu'à organiser le diagnostic et ne sont pas revendues.</label></div>
+          <div class="full"><button class="btn" id="send" type="submit" style="width:100%">Envoyer ma demande</button></div>
+          <div class="full" id="out" role="status" aria-live="polite"></div>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+
+<section class="band" id="faq" style="padding-top:8px">
+  <div class="head"><div class="eyebrow">Questions fréquentes</div><h2>Ce que l'on nous demande souvent.</h2></div>
+  <div style="max-width:780px">
+    <details><summary>Le diagnostic est-il vraiment gratuit ?</summary><p>Oui. Il est gratuit et sans engagement. Vous recevez le rapport même si vous ne donnez pas suite.</p></details>
+    <details><summary>Combien de temps dure la visite ?</summary><p>Environ une heure, selon la taille du logement.</p></details>
+    <details><summary>Que contient le rapport ?</summary><p>Les relevés pièce par pièce, la cause probable, le coût actuel de l'humidité pour votre foyer et les solutions possibles avec leurs limites.</p></details>
+    <details><summary>Et si le problème n'est pas celui que je croyais ?</summary><p>C'est justement l'intérêt du diagnostic. Condensation, infiltration et remontées capillaires se ressemblent. Le rapport nomme la cause réelle.</p></details>
+    <details><summary>Je suis locataire, puis-je demander un audit ?</summary><p>Oui. Le rapport vous aide à documenter la situation et à préparer l'échange avec votre propriétaire.</p></details>
+    <details><summary>Où intervenez-vous ?</summary><p>Dans toute la France, grâce à un réseau de professionnels certifiés. Le siège est à Caudan (56).</p></details>
+    <details><summary>Que faites-vous de mes données ?</summary><p>Elles servent uniquement à organiser votre diagnostic et à vous rappeler. Elles ne sont pas revendues.</p></details>
+  </div>
+</section></main></div>
+<footer class="dark">
+  <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAQ4AAABQCAYAAADoQpuWAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAA4RpVFh0WE1MOmNvbS5hZG9iZS54bXAAAAAAADw/eHBhY2tldCBiZWdpbj0i77u/IiBpZD0iVzVNME1wQ2VoaUh6cmVTek5UY3prYzlkIj8+IDx4OnhtcG1ldGEgeG1sbnM6eD0iYWRvYmU6bnM6bWV0YS8iIHg6eG1wdGs9IkFkb2JlIFhNUCBDb3JlIDkuMC1jMDAwIDc5LjE3MWMyN2ZhYiwgMjAyMi8wOC8xNi0yMjozNTo0MSAgICAgICAgIj4gPHJkZjpSREYgeG1sbnM6cmRmPSJodHRwOi8vd3d3LnczLm9yZy8xOTk5LzAyLzIyLXJkZi1zeW50YXgtbnMjIj4gPHJkZjpEZXNjcmlwdGlvbiByZGY6YWJvdXQ9IiIgeG1sbnM6eG1wTU09Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC9tbS8iIHhtbG5zOnN0UmVmPSJodHRwOi8vbnMuYWRvYmUuY29tL3hhcC8xLjAvc1R5cGUvUmVzb3VyY2VSZWYjIiB4bWxuczp4bXA9Imh0dHA6Ly9ucy5hZG9iZS5jb20veGFwLzEuMC8iIHhtcE1NOk9yaWdpbmFsRG9jdW1lbnRJRD0ieG1wLmRpZDo2MTM5MTZhYS1jMDczLTlhNDItYTU1MS1hMTRkZDJjNjc4OGUiIHhtcE1NOkRvY3VtZW50SUQ9InhtcC5kaWQ6MjY4MjgzN0M5OENDMTFFREExM0I4OTIzMUE3MDE5RDciIHhtcE1NOkluc3RhbmNlSUQ9InhtcC5paWQ6MjY4MjgzN0I5OENDMTFFREExM0I4OTIzMUE3MDE5RDciIHhtcDpDcmVhdG9yVG9vbD0iQWRvYmUgUGhvdG9zaG9wIDIyLjMgKFdpbmRvd3MpIj4gPHhtcE1NOkRlcml2ZWRGcm9tIHN0UmVmOmluc3RhbmNlSUQ9InhtcC5paWQ6MmFkMTVhN2MtMDk2My1iYjQ4LTkyNTMtMjQyMGNiNTVkOWYwIiBzdFJlZjpkb2N1bWVudElEPSJhZG9iZTpkb2NpZDpwaG90b3Nob3A6M2Y4M2I4ZDEtNGIyNS00ODRjLTg1MGQt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" alt="Geo Engineering" width="189" height="56">
+  <div>Geo Engineering · 200, rue François Groult, 56850 Caudan</div>
+  <div>E-mail : <code>contact@geo-engineering35.com</code></div>
+  <div class="social"><a href="https://www.facebook.com/people/G%C3%A9o-Engineering/100091961029751/" target="_blank" rel="noopener">Facebook</a><a href="https://www.linkedin.com/company/géo-engineering/mycompany/" target="_blank" rel="noopener">LinkedIn</a><a href="https://www.instagram.com/geo_engineering35/" target="_blank" rel="noopener">Instagram</a></div>
+  <div class="social"><a href="https://www.geo-engineering-solutions.com/mentions-legales" target="_blank" rel="noopener">Mentions légales</a><a href="https://www.geo-engineering-solutions.com/politique-de-confidentialite" target="_blank" rel="noopener">Politique de confidentialité</a><a href="https://www.geo-engineering-solutions.com/gestion-de-donnees" target="_blank" rel="noopener">Données personnelles</a><a href="https://www.geo-engineering-solutions.com/cookie" target="_blank" rel="noopener">Cookies</a></div>
+  <p style="font-size:.82rem;max-width:80ch;margin-top:14px">Diagnostic d'orientation. Le rapport décrit des mesures et une cause probable, il ne remplace pas une expertise bâtiment lorsque la structure est concernée.</p>
+</footer>
+<button class="btn wbtn" id="wOpen" aria-expanded="false" aria-controls="wPanel">Parler à un conseiller</button>
+<form class="wpanel" id="wPanel" hidden novalidate>
+  <button type="button" class="x" id="wClose" aria-label="Fermer">×</button>
+  <h4>On vous rappelle</h4>
+  <div><label class="l" for="wName">Nom</label><input id="wName" autocomplete="name"></div>
+  <div><label class="l" for="wPhone">Téléphone</label><input id="wPhone" type="tel" autocomplete="tel"></div>
+  <div><label class="l" for="wSlot">Créneau</label><select id="wSlot"><option>Matin</option><option>Midi</option><option>Après-midi</option><option>Fin de journée</option></select></div>
+  <div class="consent"><input id="wOk" type="checkbox"><label for="wOk">J'accepte d'être contacté(e) au sujet de ma demande.</label></div>
+  <button class="btn" type="submit">Être rappelé(e)</button>
+  <div id="wOut" role="status" aria-live="polite"></div>
+</form>
+<script>
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const ico={
+ S:'<path d="M22 5l14 5v10c0 9-6 15-14 19C14 35 8 29 8 20V10z" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linejoin="round"/><path d="M16 22l5 5 8-9" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/>',
+ O:'<path d="M8 32l4-18 8 9 4-13 4 13 8-9 4 18z" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linejoin="round"/>',
+ N:'<circle cx="22" cy="22" r="6" fill="none" stroke="var(--accent)" stroke-width="2.4"/><path d="M22 6v6M22 32v6M6 22h6M32 22h6M11 11l4 4M29 29l4 4M33 11l-4 4M15 29l-4 4" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/>',
+ C:'<path d="M8 22l14-12 14 12v14H8z" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linejoin="round"/><path d="M18 36V26h8v10" fill="none" stroke="var(--accent)" stroke-width="2.4"/>',
+ A:'<circle cx="22" cy="22" r="15" fill="none" stroke="var(--accent)" stroke-width="2.4"/><path d="M27 15c-1-2-3-3-5-3-3 0-5 2-5 4s2 3 5 4 5 2 5 4-2 4-5 4c-2 0-4-1-5-3M22 9v3M22 32v3" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linecap="round"/>',
+ SY:'<path d="M22 36S8 28 8 17a7 7 0 0114-3 7 7 0 0114 3c0 11-14 19-14 19z" fill="none" stroke="var(--accent)" stroke-width="2.4" stroke-linejoin="round"/>'
+};
+const lab={S:'Sécurité',O:'Orgueil',N:'Nouveauté',C:'Confort',A:'Argent',SY:'Sympathie'};
+const P={
+ proprietaire:{tab:'Propriétaire',h:'Protégez votre maison avant que l\'humidité ne l\'abîme.',p:'Vous saurez si votre logement a un vrai problème, d\'où il vient et ce qu\'il vous coûte.',
+  s:{S:['Une cause identifiée, pas une supposition','Les relevés sont faits devant vous et consignés dans un rapport écrit. Vous évitez de traiter le mauvais problème.'],
+     O:['Un logement sain dont vous êtes fier','Retrouvez des murs propres et un intérieur que vous avez plaisir à montrer.'],
+     N:['Des instruments de mesure professionnels','Humidimètre à pointes, hygromètre et calcul du point de rosée, loin du simple coup d\'œil.'],
+     C:['Moins de buée, moins d\'odeur, moins de froid humide','Le rapport cible les pièces qui dégradent votre confort au quotidien.'],
+     A:['Savoir ce que l\'humidité vous coûte chaque année','Peinture, ménage, chauffage, usure : le coût est chiffré poste par poste avec vos propres factures.'],
+     SY:['Un conseiller qui vous explique sans jargon','Il prend le temps, répond à vos questions et ne vous pousse à aucun achat.']}},
+ investisseur:{tab:'Investisseur',h:'Gardez la valeur et la rentabilité de votre bien.',p:'Un logement dont l\'humidité est documentée se gère, se loue et se vend plus sereinement.',
+  s:{S:['Un dossier de preuves en cas de litige','Rapport daté et mesuré, utile face à un locataire, un assureur ou un acheteur.'],
+     O:['Un patrimoine bien entretenu','Un bien sain valorise votre image de bailleur et facilite la relation locative.'],
+     N:['Un état des lieux par la mesure','Une photographie instrumentée de chaque logement, reproductible d\'une visite à l\'autre.'],
+     C:['Moins de sollicitations des locataires','Traiter la bonne cause réduit les retours et les réclamations.'],
+     A:['Un budget travaux fondé sur des chiffres','Vous comparez le coût de l\'inaction (dégradations, vacance, remises en état) aux solutions proposées.'],
+     SY:['Un interlocuteur unique pour plusieurs biens','Une fois la méthode en place, il suit l\'ensemble de votre parc.']}},
+ locataire:{tab:'Locataire',h:'Appuyez votre demande auprès du propriétaire avec des mesures.',p:'Vous ne pouvez pas modifier le bâti, mais vous pouvez documenter la situation et agir sur ce qui dépend de vous.',
+  s:{S:['Un rapport daté à présenter à votre bailleur','Des relevés précis pèsent plus qu\'un simple courrier pour demander une intervention.'],
+     O:['Faire valoir vos droits calmement','Vous arrivez avec des faits, pas avec des reproches.'],
+     N:['Mesurer ce que vous ressentez','Taux d\'humidité, température de surface et condensation, chiffrés pièce par pièce.'],
+     C:['Des gestes simples pour respirer mieux','Aération, chauffage, séchage du linge : le rapport indique ce qui peut déjà s\'améliorer chez vous.'],
+     A:['Éviter de payer pour un problème qui n\'est pas le vôtre','Savoir si la cause est le bâti ou l\'usage vous aide à répartir les responsabilités.'],
+     SY:['Un conseiller de votre côté','Il vous explique le rapport et vous aide à préparer l\'échange avec votre propriétaire.']}}
+};
+let cur='proprietaire';
+function render(){
+  $('#tabs').innerHTML=Object.entries(P).map(([k,v])=>`<button role="tab" data-k="${k}" aria-selected="${k===cur}">${v.tab}</button>`).join('');
+  const v=P[cur];
+  $('#panel').innerHTML=`<div class="promise"><h3>${v.h}</h3><p>${v.p}</p></div><div class="soncas">${Object.keys(lab).map(k=>`<div class="s"><svg viewBox="0 0 44 44" aria-hidden="true">${ico[k]}</svg><div><span class="tag">${lab[k]}</span><h4>${v.s[k][0]}</h4><p>${v.s[k][1]}</p></div></div>`).join('')}</div>`;
+  $$('#tabs button').forEach(b=>b.onclick=()=>{cur=b.dataset.k;$('#profile').value=cur;render()});
+}
+render();
+
+let mode='audit';
+function setMode(m){mode=m;$('#mAudit').setAttribute('aria-pressed',m==='audit');$('#mCall').setAttribute('aria-pressed',m==='call');$('#slotRow').hidden=m!=='call';$('#send').textContent=m==='audit'?'Recevoir mon audit gratuit':'Être rappelé(e)'}
+$('#mAudit').onclick=()=>setMode('audit');$('#mCall').onclick=()=>setMode('call');
+setMode('audit');
+$$('[data-scroll]').forEach(b=>b.onclick=()=>{if(b.dataset.mode)setMode(b.dataset.mode);$('#'+b.dataset.scroll).scrollIntoView({behavior:'smooth',block:'start'})});
+
+/* Configuration à renseigner par l'équipe web */
+const CONFIG={
+  endpoint:'https://crm.gregorytordjman.com/api/method/geo_leads.api.create_lead',          // URL qui reçoit les demandes en POST JSON (CRM, Zapier, Make, formulaire du site)
+  videoUrl:'https://www.geo-engineering-solutions.com/upload/modules/media_manager/s-geo/SGEO_V2.mp4',          // lien YouTube / Vimeo, ou fichier .mp4 de la vidéo du boîtier
+  agentScript:''        // URL du script de l'agent IA (chargé s'il est renseigné)
+};
+if(CONFIG.agentScript){const sc=document.createElement('script');sc.src=CONFIG.agentScript;sc.async=true;document.body.appendChild(sc)}
+(function(){const u=CONFIG.videoUrl,b=$('#videoBox');if(!u)return;
+  let m=u.match(/(?:youtu\.be\/|v=|embed\/)([\w-]{11})/),v=u.match(/vimeo\.com\/(\d+)/);
+  if(m)b.innerHTML=`<iframe src="https://www.youtube-nocookie.com/embed/${m[1]}" title="Fonctionnement du boîtier" allow="encrypted-media; picture-in-picture" allowfullscreen loading="lazy"></iframe>`;
+  else if(v)b.innerHTML=`<iframe src="https://player.vimeo.com/video/${v[1]}" title="Fonctionnement du boîtier" allow="fullscreen; picture-in-picture" allowfullscreen loading="lazy"></iframe>`;
+  else b.innerHTML=`<video src="${u}" controls preload="metadata" playsinline></video>`;})();
+async function post(lead){
+  if(!CONFIG.endpoint)throw new Error('endpoint manquant');
+  const r=await fetch(CONFIG.endpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(lead)});
+  if(!r.ok)throw new Error('http '+r.status);
+}
+const out=(t,c)=>{$('#out').innerHTML=`<div class="msg ${c}">${t}</div>`};
+$('#lead').addEventListener('submit',async e=>{
+  e.preventDefault();
+  const name=$('#name').value.trim(),phone=$('#phone').value.trim(),zip=$('#zip').value.trim();
+  if(!name||phone.replace(/\D/g,'').length<9||!/^\d{5}$/.test(zip)){return out('Merci de renseigner votre nom, un numéro de téléphone valide et un code postal à 5 chiffres.','err')}
+  if(!$('#ok').checked){return out('Cochez la case d\'accord pour que nous puissions vous contacter.','err')}
+  const lead={type:mode==='audit'?'audit':'rappel',name,phone,email:$('#email').value.trim(),zip,profile:$('#profile').value,
+    symptoms:$$('#symptoms input:checked').map(i=>i.value),slot:mode==='call'?$('#slot').value:'',note:$('#note').value.trim(),at:new Date().toISOString(),status:'nouveau',assignedTo:'',source:'landing-audit',page:location.href};
+  $('#send').disabled=true;
+  try{await post(lead);$('#lead').reset();setMode(lead.type==='audit'?'audit':'call');out(lead.type==='audit'?'Merci, votre demande est enregistrée. Un conseiller vous contacte sous un jour ouvré pour fixer la visite.':'Merci, votre demande de rappel est enregistrée. Un conseiller vous appelle sur le créneau choisi.','ok')}
+  catch(err){out('Votre demande n\'a pas pu être enregistrée. Réessayez dans un instant.','err')}
+  $('#send').disabled=false;
+});
+
+const wp=$('#wPanel');
+$('#wOpen').onclick=()=>{wp.hidden=!wp.hidden;$('#wOpen').setAttribute('aria-expanded',!wp.hidden)};
+$('#wClose').onclick=()=>{wp.hidden=true;$('#wOpen').setAttribute('aria-expanded','false')};
+wp.addEventListener('submit',async e=>{
+  e.preventDefault();const o=$('#wOut');
+  const name=$('#wName').value.trim(),phone=$('#wPhone').value.trim();
+  if(!name||phone.replace(/\D/g,'').length<9||!$('#wOk').checked){o.innerHTML='<div class="msg err">Indiquez votre nom, un téléphone valide et cochez la case.</div>';return}
+  try{await post({type:'rappel',name,phone,slot:$('#wSlot').value,at:new Date().toISOString(),status:'nouveau',assignedTo:'',source:'widget',page:location.href});
+    o.innerHTML='<div class="msg ok">Merci, un conseiller vous rappelle sur ce créneau.</div>';wp.reset()}
+  catch(err){o.innerHTML='<div class="msg err">Envoi impossible pour le moment. Réessayez dans un instant.</div>'}
+});
+
+
+/* ===== v3 : routeur par onglets, sous-onglets, auto-test, compteurs ===== */
+(function(){
+  const VIEWS=['accueil','pathologies','solutions','autotest','a-propos','contact'];
+  const nav=$('#nav'),bur=$('#burger');
+  const closeMenu=()=>{nav.classList.remove('open');bur.setAttribute('aria-expanded','false');bur.textContent='☰'};
+  bur.onclick=()=>{const o=nav.classList.toggle('open');bur.setAttribute('aria-expanded',o);bur.textContent=o?'✕':'☰'};
+  function show(v,push){
+    if(!VIEWS.includes(v))v='accueil';
+    $$('.view').forEach(x=>x.classList.toggle('on',x.id==='v-'+v));
+    $$('#menu a').forEach(a=>a.classList.toggle('on',a.getAttribute('href')==='#'+v));
+    closeMenu();window.scrollTo({top:0});
+    if(push!==false){try{history.replaceState(null,'','#'+v)}catch(e){}}
+  }
+  $$('a[href^="#"]').forEach(a=>a.addEventListener('click',e=>{
+    const v=a.getAttribute('href').slice(1);if(!VIEWS.includes(v))return;e.preventDefault();
+    if(a.dataset.mode&&typeof setMode==='function')setMode(a.dataset.mode);
+    show(v);
+  }));
+  window.addEventListener('hashchange',()=>show(location.hash.slice(1),false));
+  show(location.hash.slice(1)||'accueil',false);
+  $$('.subtabs').forEach(g=>g.addEventListener('click',e=>{
+    const b=e.target.closest('button');if(!b)return;
+    g.querySelectorAll('button').forEach(x=>x.setAttribute('aria-selected',x===b));
+    const pre=b.dataset.tp.slice(0,2);
+    $$('.tp').forEach(p=>{if(p.id.startsWith(pre))p.classList.toggle('on',p.id===b.dataset.tp)});
+  }));
+  const rv=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');rv.unobserve(e.target)}}),{threshold:.15});
+  $$('.rv').forEach(x=>rv.observe(x));
+  const fmt=n=>n.toLocaleString('fr-FR');
+  const cnt=new IntersectionObserver(es=>es.forEach(e=>{if(!e.isIntersecting)return;cnt.unobserve(e.target);
+    if(matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+    const el=e.target,to=+el.dataset.count,suf=el.dataset.suffix||'',t0=performance.now();
+    const tick=t=>{const p=Math.min(1,(t-t0)/1200),v=Math.round(to*(1-Math.pow(1-p,3)));el.textContent=fmt(v)+(p<1?'':suf);if(p<1)requestAnimationFrame(tick)};requestAnimationFrame(tick)}),{threshold:.6});
+  $$('[data-count]').forEach(x=>cnt.observe(x));
+  const S=[['Traces blanches ou peinture qui cloque en bas des murs',{cap:2,sal:1}],['Taches qui apparaissent ou grandissent après la pluie',{inf:3}],['Buée sur les vitres, moisissures dans les coins',{con:3}],['Pièces peu aérées, linge séché à l\'intérieur',{con:2}],['Taches localisées au plafond ou sous la toiture',{inf:2}],['Dépôts blancs poudreux sur les murs',{sal:2,cap:2}],['Odeur de cave, parquet qui gonfle',{vs:2,cap:1}]];
+  const C={cap:'Remontées capillaires',inf:'Infiltrations',con:'Condensation',sal:'Salpêtre (signe d\'une humidité ancienne)',vs:'Humidité du vide sanitaire'};
+  $('#qopts').innerHTML=S.map((s,i)=>`<label><input type="checkbox" data-i="${i}"><span>${s[0]}</span></label>`).join('');
+  const calc=()=>{
+    const sc={},on=$$('#qopts input:checked').map(c=>+c.dataset.i);
+    on.forEach(i=>Object.entries(S[i][1]).forEach(([k,v])=>sc[k]=(sc[k]||0)+v));
+    const tot=Object.values(sc).reduce((a,b)=>a+b,0),r=Object.entries(sc).sort((a,b)=>b[1]-a[1]);
+    $('#qres').innerHTML=on.length?`<h3>Pistes à vérifier</h3>${r.map(([k,v])=>`<div class="row2"><span>${C[k]}</span><b>${Math.round(v/tot*100)} %</b></div><div class="bar"><i style="width:${v/tot*100}%"></i></div>`).join('')}<p style="font-size:.88rem;color:var(--muted);margin:0 0 14px">Répartition indicative selon vos réponses. Seule une mesure sur place confirme la cause.</p><a class="btn" href="#contact" id="qcta" style="width:100%">Faire confirmer par un audit gratuit</a>`:`<h3>Vos pistes apparaîtront ici</h3><p style="color:var(--muted);margin:0">Cochez au moins une situation à gauche.</p>`;
+    const b=$('#qcta');if(b)b.addEventListener('click',()=>{const n=$('#note');n.value='Auto-test : '+on.map(i=>S[i][0]).join(' ; ');if(typeof setMode==='function')setMode('audit')});
+  };
+  $('#qopts').addEventListener('change',calc);calc();
+})();
+</script>

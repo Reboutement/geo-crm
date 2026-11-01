@@ -3,6 +3,9 @@ name: Build image Geo CRM
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'site/**'
+      - 'outil/**'
   workflow_dispatch:
     inputs:
       tag:
