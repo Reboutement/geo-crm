@@ -1,0 +1,54 @@
+name: Build image Geo CRM
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag de l'image (ex. v1)"
+        default: "v1"
+        required: true
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Récupérer frappe_docker
+        run: git clone --depth 1 https://github.com/frappe/frappe_docker
+
+      - name: Préparer apps.json
+        env:
+          GEO_LEADS_TOKEN: ${{ secrets.GEO_LEADS_TOKEN }}
+        run: |
+          # Si geo_leads est privé, ajoutez le secret GEO_LEADS_TOKEN (jeton en lecture seule).
+          if [ -n "$GEO_LEADS_TOKEN" ]; then
+            sed -i "s#https://github.com/#https://x-access-token:${GEO_LEADS_TOKEN}@github.com/#g" apps.json
+          fi
+          echo "APPS_JSON_BASE64=$(base64 -w0 apps.json)" >> "$GITHUB_ENV"
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Nom d'image en minuscules
+        run: echo "IMAGE=ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/geo-crm" >> "$GITHUB_ENV"
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: frappe_docker
+          file: frappe_docker/images/layered/Containerfile
+          push: true
+          build-args: |
+            FRAPPE_PATH=https://github.com/frappe/frappe
+            FRAPPE_BRANCH=version-15
+            APPS_JSON_BASE64=${{ env.APPS_JSON_BASE64 }}
+          tags: ${{ env.IMAGE }}:${{ inputs.tag || 'v1' }}
